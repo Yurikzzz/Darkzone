@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: Pistol
   m_EditorClassIdentifier: 
   weaponName: Pistol
-  isAutomatic: 0
-  fireRate: 5
+  isAutomatic: 1
+  fireRate: 40
   bulletsPerShot: 1
-  bulletSpread: 3
+  bulletSpread: 2
   bulletSpeed: 50
   bulletRange: 30
   damage: 10
-  magazineSize: 12
+  magazineSize: 50
   reloadTime: 1.5
