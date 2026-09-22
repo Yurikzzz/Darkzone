@@ -16,6 +16,7 @@ public class WeaponController : MonoBehaviour
     private float nextFireTime;
     private float reloadTimer;
     private Camera mainCam;
+    private PlayerMovement playerMovement;
     private ContactFilter2D rayFilter;
     private readonly List<RaycastHit2D> rayResults = new List<RaycastHit2D>();
 
@@ -26,6 +27,7 @@ public class WeaponController : MonoBehaviour
     private void Awake()
     {
         mainCam = Camera.main;
+        playerMovement = GetComponentInParent<PlayerMovement>();
 
         rayFilter = new ContactFilter2D();
         rayFilter.useTriggers = false;
@@ -54,6 +56,8 @@ public class WeaponController : MonoBehaviour
 
     private void HandleShooting()
     {
+        if (playerMovement != null && playerMovement.IsRunning) return;
+
         bool fireInput = weaponData.isAutomatic
             ? Input.GetMouseButton(0)
             : Input.GetMouseButtonDown(0);

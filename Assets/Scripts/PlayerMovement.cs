@@ -17,6 +17,8 @@ public class PlayerMovement : MonoBehaviour
     private float dashTimer;
     private float dashCooldownTimer;
     private Vector2 dashDirection;
+    
+    public bool IsRunning { get; private set; }
 
     private void Awake()
     {
@@ -54,11 +56,12 @@ public class PlayerMovement : MonoBehaviour
         if (isDashing)
         {
             rb.linearVelocity = dashDirection * dashSpeed;
+            IsRunning = false;
             return;
         }
 
-        bool isRunning = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-        float speed = isRunning ? runSpeed : runSpeed * walkSpeedRatio;
+        IsRunning = (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && moveInput != Vector2.zero;
+        float speed = IsRunning ? runSpeed : runSpeed * walkSpeedRatio;
         rb.linearVelocity = moveInput * speed;
     }
 }
