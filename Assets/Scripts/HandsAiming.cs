@@ -14,6 +14,7 @@ public class HandsAiming : MonoBehaviour
     [SerializeField] private float orbitVerticalOffset = 0f;
 
     private Camera mainCam;
+    private Vector3 initialScale;
 
     private void Awake()
     {
@@ -24,6 +25,9 @@ public class HandsAiming : MonoBehaviour
 
         if (playerSpriteRenderer == null)
             playerSpriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (handsTransform != null)
+            initialScale = handsTransform.localScale;
     }
 
     private void Update()
@@ -60,11 +64,11 @@ public class HandsAiming : MonoBehaviour
         if (aimingLeft)
         {
             // When aiming left, flip the hands vertically by inverting the Y-scale.
-            handsTransform.localScale = new Vector3(1f, -1f, 1f);
+            handsTransform.localScale = new Vector3(initialScale.x, -Mathf.Abs(initialScale.y), initialScale.z);
         }
         else
         {
-            handsTransform.localScale = new Vector3(1f, 1f, 1f);
+            handsTransform.localScale = new Vector3(initialScale.x, Mathf.Abs(initialScale.y), initialScale.z);
         }
     }
 }

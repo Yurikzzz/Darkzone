@@ -1,0 +1,689 @@
+fileFormatVersion: 2
+guid: 94536fd0b4fbe2a418f430fac5a82462
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 3607355403951851975
+    second: GZ2-Characters_Soldier_24px_0
+  - first:
+      213: -2411338827119684926
+    second: GZ2-Characters_Soldier_24px_1
+  - first:
+      213: -3055989203537243175
+    second: GZ2-Characters_Soldier_24px_2
+  - first:
+      213: 8762281628581471900
+    second: GZ2-Characters_Soldier_24px_3
+  - first:
+      213: -6698719593447252670
+    second: GZ2-Characters_Soldier_24px_4
+  - first:
+      213: 9200056674718119079
+    second: GZ2-Characters_Soldier_24px_5
+  - first:
+      213: 2237689389136627534
+    second: GZ2-Characters_Soldier_24px_6
+  - first:
+      213: -249417566944418557
+    second: GZ2-Characters_Soldier_24px_7
+  - first:
+      213: -1504126220603849052
+    second: GZ2-Characters_Soldier_24px_8
+  - first:
+      213: 2579920386259323586
+    second: GZ2-Characters_Soldier_24px_9
+  - first:
+      213: 4836166016550146556
+    second: GZ2-Characters_Soldier_24px_10
+  - first:
+      213: 3134318891678445174
+    second: GZ2-Characters_Soldier_24px_11
+  - first:
+      213: -5563096093084167824
+    second: GZ2-Characters_Soldier_24px_12
+  - first:
+      213: -6197992109249608874
+    second: GZ2-Characters_Soldier_24px_13
+  - first:
+      213: -4900062237384163208
+    second: GZ2-Characters_Soldier_24px_14
+  - first:
+      213: 2449109201478202199
+    second: GZ2-Characters_Soldier_24px_15
+  - first:
+      213: 425375407791450266
+    second: GZ2-Characters_Soldier_24px_16
+  - first:
+      213: 6981446106718070665
+    second: GZ2-Characters_Soldier_24px_17
+  - first:
+      213: -3534548737220391493
+    second: GZ2-Characters_Soldier_24px_18
+  - first:
+      213: 6025477759217195244
+    second: GZ2-Characters_Soldier_24px_19
+  - first:
+      213: -2067845116247992055
+    second: GZ2-Characters_Soldier_24px_20
+  - first:
+      213: 207610635308393813
+    second: GZ2-Characters_Soldier_24px_21
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 32
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_0
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 48
+        width: 19
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7c9c22790a6ef0230800000000000000
+      internalID: 3607355403951851975
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_1
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 48
+        width: 17
+        height: 21
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2c29c60dc14398ed0800000000000000
+      internalID: -2411338827119684926
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_2
+      rect:
+        serializedVersion: 2
+        x: 50
+        y: 48
+        width: 19
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9d3dbbdb202f695d0800000000000000
+      internalID: -3055989203537243175
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_3
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 48
+        width: 19
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c96a78577b0e99970800000000000000
+      internalID: 8762281628581471900
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_4
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 24
+        width: 19
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 24d90a6650e5903a0800000000000000
+      internalID: -6698719593447252670
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_5
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 24
+        width: 19
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 7a4f80a3dca2daf70800000000000000
+      internalID: 9200056674718119079
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_6
+      rect:
+        serializedVersion: 2
+        x: 51
+        y: 24
+        width: 18
+        height: 22
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e474625c4aedd0f10800000000000000
+      internalID: 2237689389136627534
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_7
+      rect:
+        serializedVersion: 2
+        x: 74
+        y: 24
+        width: 17
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 30529895b04e98cf0800000000000000
+      internalID: -249417566944418557
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_8
+      rect:
+        serializedVersion: 2
+        x: 98
+        y: 24
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4a68e8beb25402be0800000000000000
+      internalID: -1504126220603849052
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_9
+      rect:
+        serializedVersion: 2
+        x: 121
+        y: 24
+        width: 18
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2ca86cb1ce7bdc320800000000000000
+      internalID: 2579920386259323586
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_10
+      rect:
+        serializedVersion: 2
+        x: 145
+        y: 25
+        width: 18
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cf199437e538d1340800000000000000
+      internalID: 4836166016550146556
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_11
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 24
+        width: 18
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 67e2a47fc665f7b20800000000000000
+      internalID: 3134318891678445174
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_12
+      rect:
+        serializedVersion: 2
+        x: 2
+        y: 0
+        width: 19
+        height: 20
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 071da50f399ebc2b0800000000000000
+      internalID: -5563096093084167824
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_13
+      rect:
+        serializedVersion: 2
+        x: 26
+        y: 0
+        width: 16
+        height: 19
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 653c087d30f4cf9a0800000000000000
+      internalID: -6197992109249608874
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_14
+      rect:
+        serializedVersion: 2
+        x: 49
+        y: 0
+        width: 17
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 87049635b5b7ffbb0800000000000000
+      internalID: -4900062237384163208
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_15
+      rect:
+        serializedVersion: 2
+        x: 73
+        y: 0
+        width: 21
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 753bf32c7dbfcf120800000000000000
+      internalID: 2449109201478202199
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_16
+      rect:
+        serializedVersion: 2
+        x: 98
+        y: 0
+        width: 22
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a98a89dfdac37e500800000000000000
+      internalID: 425375407791450266
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_17
+      rect:
+        serializedVersion: 2
+        x: 122
+        y: 0
+        width: 22
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 987e679ae3413e060800000000000000
+      internalID: 6981446106718070665
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_18
+      rect:
+        serializedVersion: 2
+        x: 146
+        y: 0
+        width: 22
+        height: 11
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: bbd4cac76a2c2fec0800000000000000
+      internalID: -3534548737220391493
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_19
+      rect:
+        serializedVersion: 2
+        x: 169
+        y: 0
+        width: 23
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ce85820091cce9350800000000000000
+      internalID: 6025477759217195244
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_20
+      rect:
+        serializedVersion: 2
+        x: 194
+        y: 0
+        width: 22
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 909138b92d98d43e0800000000000000
+      internalID: -2067845116247992055
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: GZ2-Characters_Soldier_24px_21
+      rect:
+        serializedVersion: 2
+        x: 218
+        y: 0
+        width: 22
+        height: 10
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 5556629d5c491e200800000000000000
+      internalID: 207610635308393813
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: b5cff78d06b7ee94680bf35e12a11d41
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      GZ2-Characters_Soldier_24px_0: 3607355403951851975
+      GZ2-Characters_Soldier_24px_1: -2411338827119684926
+      GZ2-Characters_Soldier_24px_10: 4836166016550146556
+      GZ2-Characters_Soldier_24px_11: 3134318891678445174
+      GZ2-Characters_Soldier_24px_12: -5563096093084167824
+      GZ2-Characters_Soldier_24px_13: -6197992109249608874
+      GZ2-Characters_Soldier_24px_14: -4900062237384163208
+      GZ2-Characters_Soldier_24px_15: 2449109201478202199
+      GZ2-Characters_Soldier_24px_16: 425375407791450266
+      GZ2-Characters_Soldier_24px_17: 6981446106718070665
+      GZ2-Characters_Soldier_24px_18: -3534548737220391493
+      GZ2-Characters_Soldier_24px_19: 6025477759217195244
+      GZ2-Characters_Soldier_24px_2: -3055989203537243175
+      GZ2-Characters_Soldier_24px_20: -2067845116247992055
+      GZ2-Characters_Soldier_24px_21: 207610635308393813
+      GZ2-Characters_Soldier_24px_3: 8762281628581471900
+      GZ2-Characters_Soldier_24px_4: -6698719593447252670
+      GZ2-Characters_Soldier_24px_5: 9200056674718119079
+      GZ2-Characters_Soldier_24px_6: 2237689389136627534
+      GZ2-Characters_Soldier_24px_7: -249417566944418557
+      GZ2-Characters_Soldier_24px_8: -1504126220603849052
+      GZ2-Characters_Soldier_24px_9: 2579920386259323586
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
