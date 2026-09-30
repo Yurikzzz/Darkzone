@@ -115,7 +115,7 @@ public class ZoneTeleporter : MonoBehaviour
     {
         // Only teleport if the player is still in range
         if (playerInRange)
-            Teleport();
+            StartCoroutine(TeleportSequence());
 
         prompt.PromptText = $"[{interactKey}] Evacuate";
     }
@@ -124,27 +124,48 @@ public class ZoneTeleporter : MonoBehaviour
 
     private void Teleport()
     {
+        StartCoroutine(TeleportSequence());
+    }
+
+    private System.Collections.IEnumerator TeleportSequence()
+    {
         GameObject player = GameObject.FindWithTag("Player");
-        if (player == null) return;
+        if (player == null) yield break;
 
-        // Move the player to the destination
-        player.transform.position = destination.position;
-
-        // Reset velocity so the player doesn't slide after teleporting
-        Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
-        if (rb != null)
-            rb.linearVelocity = Vector2.zero;
-
-        // Notify the DarkzoneManager
-        if (DarkzoneManager.Instance != null)
+        // Ensure ScreenFader exists
+        if (ScreenFader.Instance == null)
         {
-            if (type == TeleporterType.EnterZone)
-                DarkzoneManager.Instance.EnterZone();
-            else
-                DarkzoneManager.Instance.LeaveZone();
+            new GameObject("ScreenFader").AddComponent<ScreenFader>();
         }
 
-        // Player left the trigger volume by teleporting
-        playerInRange = false;
+        PlayerMovement movement = player.GetComponent<PlayerMovement>();
+        if (movement != null)
+            movement.CanMove = false; // Block movement
+
+        // Fade in (0.25s), wait (1s) and perform teleport, then fade out (0.25s)
+        yield return ScreenFader.Instance.StartCoroutine(
+            ScreenFader.Instance.DoFadeSequence(0.25f, 1f, () =>
+            {
+                // Execute the actual teleport while the screen is black
+                player.transform.position = destination.position;
+
+                Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+                if (rb != null)
+                    rb.linearVelocity = Vector2.zero;
+
+                if (DarkzoneManager.Instance != null)
+                {
+                    if (type == TeleporterType.EnterZone)
+                        DarkzoneManager.Instance.EnterZone();
+                    else
+                        DarkzoneManager.Instance.LeaveZone();
+                }
+
+                playerInRange = false;
+            })
+        );
+
+        if (movement != null)
+            movement.CanMove = true; // Restore movement
     }
 }

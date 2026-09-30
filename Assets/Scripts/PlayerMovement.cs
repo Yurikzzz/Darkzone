@@ -18,6 +18,8 @@ public class PlayerMovement : MonoBehaviour
     private float dashCooldownTimer;
     private Vector2 dashDirection;
     
+    public bool CanMove { get; set; } = true;
+
     public bool IsRunning { get; private set; }
 
     private void Awake()
@@ -27,6 +29,12 @@ public class PlayerMovement : MonoBehaviour
 
     private void Update()
     {
+        if (!CanMove)
+        {
+            moveInput = Vector2.zero;
+            return;
+        }
+
         if (dashCooldownTimer > 0f)
             dashCooldownTimer -= Time.deltaTime;
 
@@ -53,6 +61,13 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (!CanMove)
+        {
+            rb.linearVelocity = Vector2.zero;
+            IsRunning = false;
+            return;
+        }
+
         if (isDashing)
         {
             rb.linearVelocity = dashDirection * dashSpeed;
