@@ -9,7 +9,10 @@ public class EnemyAttack : MonoBehaviour
     [SerializeField] private float hitboxOffset = 1.5f;
     [SerializeField] private float cooldown = 2f;
 
-    private bool isAttacking;
+    // Read by EnemyMovement to freeze position during wind-up
+    public bool IsAttacking => _isAttacking;
+
+    private bool _isAttacking;
     private float windUpTimer;
     private float cooldownTimer;
 
@@ -101,18 +104,22 @@ public class EnemyAttack : MonoBehaviour
         if (cooldownTimer > 0f)
             cooldownTimer -= Time.deltaTime;
 
-        if (Input.GetKeyDown(KeyCode.B) && !isAttacking && cooldownTimer <= 0f)
-            StartAttack();
-
-        if (isAttacking)
+        if (_isAttacking)
             UpdateWindUp();
+    }
+
+    /// <summary>Called by EnemyMovement each FixedUpdate when the player is in range.</summary>
+    public void TryAttack()
+    {
+        if (!_isAttacking && cooldownTimer <= 0f)
+            StartAttack();
     }
 
     private void StartAttack()
     {
         if (player == null) return;
 
-        isAttacking = true;
+        _isAttacking = true;
         windUpTimer = 0f;
 
         // Aim the indicator toward the player
@@ -164,7 +171,7 @@ public class EnemyAttack : MonoBehaviour
 
     private void EndAttack()
     {
-        isAttacking = false;
+        _isAttacking = false;
         cooldownTimer = cooldown;
         attackIndicator.gameObject.SetActive(false);
     }
