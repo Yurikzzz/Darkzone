@@ -44,6 +44,7 @@ public class WeaponController : MonoBehaviour
     private void Update()
     {
         if (weaponData == null) return;
+        if (playerMovement != null && !playerMovement.CanMove) return;
 
         HandleReloading();
         if (isReloading) return;
@@ -157,5 +158,19 @@ public class WeaponController : MonoBehaviour
         isReloading = false;
         OnReloadStateChanged?.Invoke(false);
         NotifyAmmoChanged();
+    }
+
+    /// <summary>
+    /// Refills the current magazine back to maximum and cancels any active reload.
+    /// </summary>
+    public void RefillAmmo()
+    {
+        if (weaponData != null)
+        {
+            currentAmmo = weaponData.magazineSize;
+            isReloading = false;
+            OnReloadStateChanged?.Invoke(false);
+            NotifyAmmoChanged();
+        }
     }
 }

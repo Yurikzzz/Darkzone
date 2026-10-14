@@ -21,10 +21,50 @@ public class PlayerMovement : MonoBehaviour
     public bool CanMove { get; set; } = true;
 
     public bool IsRunning { get; private set; }
+    public bool IsMoving => moveInput != Vector2.zero && CanMove;
+    public bool IsDashing => isDashing;
+    public Vector2 MoveInput => moveInput;
+
+    private PlayerHealth playerHealth;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        playerHealth = GetComponent<PlayerHealth>();
+    }
+
+    private void OnEnable()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDeath += HandleDeath;
+    }
+
+    private void OnDisable()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDeath -= HandleDeath;
+    }
+
+    private void HandleDeath()
+    {
+        CanMove = false;
+        moveInput = Vector2.zero;
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
+    }
+
+    /// <summary>
+    /// Resets movement, dashing, and cooldowns back to ready state.
+    /// </summary>
+    public void ResetState()
+    {
+        CanMove = true;
+        isDashing = false;
+        dashTimer = 0f;
+        dashCooldownTimer = 0f;
+        moveInput = Vector2.zero;
+        if (rb != null)
+            rb.linearVelocity = Vector2.zero;
     }
 
     private void Update()

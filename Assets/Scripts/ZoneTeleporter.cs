@@ -161,11 +161,61 @@ public class ZoneTeleporter : MonoBehaviour
                         DarkzoneManager.Instance.LeaveZone();
                 }
 
+                if (type == TeleporterType.ExitZone)
+                {
+                    ResetPlayer(player);
+                }
+
                 playerInRange = false;
             })
         );
 
         if (movement != null)
             movement.CanMove = true; // Restore movement
+    }
+
+    /// <summary>
+    /// Resets the player's health, ammunition, and other states back to 100% full upon evacuating.
+    /// </summary>
+    private void ResetPlayer(GameObject player)
+    {
+        if (player == null) return;
+
+        // Reset Health back to full
+        PlayerHealth health = player.GetComponent<PlayerHealth>();
+        if (health != null)
+        {
+            health.ResetHealth();
+        }
+
+        // Refill Ammo back to full magazine and cancel reload
+        WeaponController weapon = player.GetComponentInChildren<WeaponController>();
+        if (weapon != null)
+        {
+            weapon.RefillAmmo();
+        }
+
+        // Reset movement, dash, and timers
+        PlayerMovement movement = player.GetComponent<PlayerMovement>();
+        if (movement != null)
+        {
+            movement.ResetState();
+        }
+
+        // Reset hands aiming & visibility
+        HandsAiming hands = player.GetComponent<HandsAiming>();
+        if (hands != null)
+        {
+            hands.ResetHands();
+        }
+
+        // Reset animation state back to Idle
+        PlayerAnimation anim = player.GetComponent<PlayerAnimation>();
+        if (anim != null)
+        {
+            anim.ResetAnimationState();
+        }
+
+        Debug.Log("[Darkzone] Player evacuated! Health and ammo reset to full.");
     }
 }

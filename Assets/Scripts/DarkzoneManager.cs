@@ -54,8 +54,6 @@ public class DarkzoneManager : MonoBehaviour
     /// </summary>
     public void LeaveZone()
     {
-        if (!IsPlayerInZone) return;
-
         IsPlayerInZone = false;
         OnPlayerLeftZone?.Invoke();
     }

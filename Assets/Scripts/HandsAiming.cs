@@ -15,10 +15,12 @@ public class HandsAiming : MonoBehaviour
 
     private Camera mainCam;
     private Vector3 initialScale;
+    private PlayerHealth playerHealth;
 
     private void Awake()
     {
         mainCam = Camera.main;
+        playerHealth = GetComponent<PlayerHealth>();
 
         if (handsTransform == null)
             handsTransform = transform.Find("Hands");
@@ -28,6 +30,35 @@ public class HandsAiming : MonoBehaviour
 
         if (handsTransform != null)
             initialScale = handsTransform.localScale;
+    }
+
+    private void OnEnable()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDeath += HandleDeath;
+    }
+
+    private void OnDisable()
+    {
+        if (playerHealth != null)
+            playerHealth.OnDeath -= HandleDeath;
+    }
+
+    private void HandleDeath()
+    {
+        if (handsTransform != null)
+            handsTransform.gameObject.SetActive(false);
+        enabled = false;
+    }
+
+    /// <summary>
+    /// Reactivates hands aiming and ensures the hands object is enabled.
+    /// </summary>
+    public void ResetHands()
+    {
+        enabled = true;
+        if (handsTransform != null)
+            handsTransform.gameObject.SetActive(true);
     }
 
     private void Update()

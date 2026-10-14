@@ -46,6 +46,15 @@ public class PlayerHealth : MonoBehaviour, IDamageable
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
+    /// <summary>
+    /// Restores player health back to maximum and triggers the health changed event.
+    /// </summary>
+    public void ResetHealth()
+    {
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+    }
+
     private void Die()
     {
         OnDeath?.Invoke();
