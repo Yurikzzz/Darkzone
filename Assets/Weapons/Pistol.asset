@@ -13,12 +13,17 @@ MonoBehaviour:
   m_Name: Pistol
   m_EditorClassIdentifier: 
   weaponName: Pistol
-  isAutomatic: 1
-  fireRate: 40
+  isAutomatic: 0
+  fireRate: 5
   bulletsPerShot: 1
-  bulletSpread: 2
-  bulletSpeed: 50
-  bulletRange: 30
-  damage: 10
-  magazineSize: 50
-  reloadTime: 1.5
+  bulletSpread: 1
+  bulletSpeed: 35
+  bulletRange: 25
+  damage: 18
+  magazineSize: 12
+  reloadTime: 1.2
+  weaponSprite: {fileID: 1810505963840743040, guid: 83c635b38bc09e241969353270177082, type: 3}
+  firePointOffset: {x: -0.12, y: 0}
+  bulletColor: {r: 1, g: 0.85, b: 0.2, a: 1}
+  trailWidth: 0.29
+  trailFadeTime: 0.105

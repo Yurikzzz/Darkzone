@@ -13,6 +13,14 @@ public class Bullet : MonoBehaviour
     // Init is the function called when you fire the gun to set the start and end points
     public void Init(Vector2 start, Vector2 end)
     {
+        Init(start, end, bulletColor, trailWidth, fadeTime);
+    }
+
+    public void Init(Vector2 start, Vector2 end, Color color, float width, float customFadeTime)
+    {
+        fadeTime = customFadeTime;
+        bulletColor = color;
+        trailWidth = width;
         fadeTimer = fadeTime;
         initialized = true;
 

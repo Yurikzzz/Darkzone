@@ -305,7 +305,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 290770714}
+  - {fileID: 1640618348}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -326,7 +326,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 11
-  m_Sprite: {fileID: -1587664386413405596, guid: 83c635b38bc09e241969353270177082, type: 3}
+  m_Sprite: {fileID: 1810505963840743040, guid: 83c635b38bc09e241969353270177082, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -342,56 +342,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7042091697522333244, guid: af6e18ef82b424447a40eb00eb7d8d57, type: 3}
   m_PrefabInstance: {fileID: 3560039588418730372}
   m_PrefabAsset: {fileID: 0}
---- !u!21 &290770714
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Sprite-Lit-Default (Instance)
-  m_Shader: {fileID: 4800000, guid: e260cfa7296ee7642b167f1eb5be5023, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords:
-  - ETC1_EXTERNAL_ALPHA
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs:
-    - _AlphaTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MainTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _MaskTex:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    - _NormalMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
-    m_Ints: []
-    m_Floats:
-    - _EnableExternalAlpha: 0
-    - _ZWrite: 0
-    m_Colors:
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Flip: {r: 1, g: 1, b: 1, a: 1}
-    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &367912266
 GameObject:
   m_ObjectHideFlags: 0
@@ -586,9 +536,9 @@ Camera:
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
-    y: 0
+    y: 0.055555556
     width: 1
-    height: 1
+    height: 0.8888889
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 60
@@ -970,6 +920,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ammoText: {fileID: 1734901605}
   weaponController: {fileID: 1488159921}
+  showWeaponName: 1
 --- !u!114 &611221221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2005,6 +1956,8 @@ GameObject:
   - component: {fileID: 1488159923}
   - component: {fileID: 1488159925}
   - component: {fileID: 1488159924}
+  - component: {fileID: 1488159926}
+  - component: {fileID: 1488159927}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -2188,6 +2141,14 @@ MonoBehaviour:
   weaponData: {fileID: 11400000, guid: b5a8c204fde2c7e458a1c0aece663f0b, type: 2}
   firePoint: {fileID: 16462595}
   bulletPrefab: {fileID: 2495828743280622719, guid: 125a59da53eb7814a95f851a1c3e21b3, type: 3}
+  availableWeapons:
+  - {fileID: 11400000, guid: b5a8c204fde2c7e458a1c0aece663f0b, type: 2}
+  - {fileID: 11400000, guid: ecb46f00669e4224285b7ac6d5aa98b8, type: 2}
+  - {fileID: 11400000, guid: bc43c9a74b6be004892b897bdfa3d454, type: 2}
+  - {fileID: 11400000, guid: 8bb8d0cd6b4c3cb4eb03b5035f5f478c, type: 2}
+  - {fileID: 11400000, guid: e7b17ef7008e705498c3bd969f344c70, type: 2}
+  currentWeaponIndex: 0
+  gunSpriteRenderer: {fileID: 230847879}
   currentAmmo: 0
 --- !u!114 &1488159922
 MonoBehaviour:
@@ -2256,6 +2217,101 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1488159926
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488159915}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55e95d9629ad0e94ca38433141e2a3cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  meleeKey: 118
+  damage: 45
+  attackCooldown: 0.45
+  attackRange: 1.6
+  arcAngle: 110
+  knockbackForce: 12
+  knockbackDuration: 0.25
+  knifeSprite: {fileID: 5139471226457014731, guid: 83c635b38bc09e241969353270177082, type: 3}
+  slashDuration: 0.16
+  slashDistance: 1.25
+  knifeScale: {x: 1, y: 1, z: 1}
+  slashColor: {r: 1, g: 1, b: 1, a: 1}
+  showTrail: 1
+  trailColor: {r: 1, g: 1, b: 1, a: 0.85}
+  hideHandsDuringSlash: 1
+--- !u!114 &1488159927
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488159915}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e803cedc7b7e5d418957302ce18b1e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  respawnPoint: {fileID: 776128057}
+  deathAnimationDuration: 1
+  fadeDuration: 0.35
+  blackScreenHold: 0.5
+  useScreenFade: 1
+  refillAmmoOnRespawn: 1
+--- !u!21 &1640618348
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Sprite-Lit-Default (Instance) (Instance)
+  m_Shader: {fileID: 4800000, guid: e260cfa7296ee7642b167f1eb5be5023, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - ETC1_EXTERNAL_ALPHA
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AlphaTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MaskTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NormalMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _EnableExternalAlpha: 0
+    - _ZWrite: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Flip: {r: 1, g: 1, b: 1, a: 1}
+    - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &1734901603
 GameObject:
   m_ObjectHideFlags: 0

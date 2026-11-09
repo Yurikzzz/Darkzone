@@ -81,10 +81,20 @@ public class EnemySpawner : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         // Allow an immediate first spawn as soon as the player enters range
         spawnTimer = 0f;
+
+        if (DarkzoneManager.Instance != null)
+        {
+            DarkzoneManager.Instance.OnPlayerLeftZone += ResetSpawner;
+        }
     }
 
     private void OnDestroy()
     {
+        if (DarkzoneManager.Instance != null)
+        {
+            DarkzoneManager.Instance.OnPlayerLeftZone -= ResetSpawner;
+        }
+
         foreach (var kvp in runtimeTemplates)
         {
             if (kvp.Value != null)
@@ -93,9 +103,37 @@ public class EnemySpawner : MonoBehaviour
         runtimeTemplates.Clear();
     }
 
+    /// <summary>
+    /// Despawns all active enemies spawned by this spawner and resets the spawn timer.
+    /// </summary>
+    public void ResetSpawner()
+    {
+        for (int i = activeEnemies.Count - 1; i >= 0; i--)
+        {
+            if (activeEnemies[i] != null)
+            {
+                SafeDestroy(activeEnemies[i]);
+            }
+        }
+        activeEnemies.Clear();
+        spawnTimer = 0f;
+    }
+
+    private static void SafeDestroy(GameObject go)
+    {
+        if (go == null) return;
+        if (Application.isPlaying)
+            Destroy(go);
+        else
+            DestroyImmediate(go);
+    }
+
     private void Update()
     {
         if (player == null || enemyPool.Count == 0) return;
+
+        // Only spawn enemies while the player is inside the Darkzone
+        if (DarkzoneManager.Instance != null && !DarkzoneManager.Instance.IsPlayerInZone) return;
 
         // Tick down cooldown timer
         if (spawnTimer > 0f)

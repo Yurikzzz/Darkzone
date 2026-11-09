@@ -115,6 +115,20 @@ public class EnemyAttack : MonoBehaviour
             StartAttack();
     }
 
+    /// <summary>
+    /// Immediately interrupts and cancels an ongoing attack wind-up.
+    /// </summary>
+    public void CancelAttack()
+    {
+        if (!_isAttacking) return;
+
+        _isAttacking = false;
+        windUpTimer = 0f;
+        cooldownTimer = cooldown * 0.5f; // Brief recovery period before attempting another attack
+        if (attackIndicator != null)
+            attackIndicator.gameObject.SetActive(false);
+    }
+
     private void StartAttack()
     {
         if (player == null) return;
