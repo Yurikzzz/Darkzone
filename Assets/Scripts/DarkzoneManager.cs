@@ -102,8 +102,16 @@ public class DarkzoneManager : MonoBehaviour
             }
         }
 
+        // 5. Reset all LootChests in the zone
+        LootChest[] chests = FindObjectsByType<LootChest>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var chest in chests)
+        {
+            if (chest != null)
+                chest.ResetChest();
+        }
+
         OnPlayerLeftZone?.Invoke();
-        Debug.Log("[DarkzoneManager] Zone reset complete! All enemies despawned and spawners reset.");
+        Debug.Log("[DarkzoneManager] Zone reset complete! All enemies despawned, spawners reset, and chests closed.");
     }
 
     private static void SafeDestroy(GameObject go)

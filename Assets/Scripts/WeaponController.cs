@@ -119,20 +119,36 @@ public class WeaponController : MonoBehaviour
             StartReload();
     }
 
+    [Header("Equipped Slots")]
+    [SerializeField] private WeaponData primarySlot;
+    [SerializeField] private WeaponData secondarySlot;
+
+    public WeaponData PrimarySlot => primarySlot;
+    public WeaponData SecondarySlot => secondarySlot;
+
     private void HandleWeaponSwitchInput()
     {
-        if (availableWeapons.Count <= 1) return;
-
-        // Number keys 1..9 (and keypad 1..9)
-        for (int i = 0; i < availableWeapons.Count && i < 9; i++)
+        // Number key 1: Primary Weapon Slot
+        if (Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Keypad1))
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1 + i) || Input.GetKeyDown(KeyCode.Keypad1 + i))
+            if (primarySlot != null && weaponData != primarySlot)
             {
-                if (i != currentWeaponIndex)
-                    EquipWeaponByIndex(i);
-                return;
+                EquipWeapon(primarySlot);
             }
+            return;
         }
+
+        // Number key 2: Secondary Weapon Slot
+        if (Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2))
+        {
+            if (secondarySlot != null && weaponData != secondarySlot)
+            {
+                EquipWeapon(secondarySlot);
+            }
+            return;
+        }
+
+        if (availableWeapons.Count <= 1) return;
 
         // Mouse scroll wheel cycling
         float scroll = Input.GetAxis("Mouse ScrollWheel");
@@ -153,6 +169,62 @@ public class WeaponController : MonoBehaviour
             int nextIndex = (currentWeaponIndex + 1) % availableWeapons.Count;
             EquipWeaponByIndex(nextIndex);
         }
+    }
+
+    /// <summary>
+    /// Sets the equipped loadout using Primary and Secondary weapon slots.
+    /// </summary>
+    public void SetEquippedSlots(WeaponData primary, WeaponData secondary)
+    {
+        primarySlot = primary;
+        secondarySlot = secondary;
+
+        availableWeapons.Clear();
+        if (primary != null)
+        {
+            availableWeapons.Add(primary);
+            if (!ammoPerWeapon.ContainsKey(primary))
+                ammoPerWeapon[primary] = primary.magazineSize;
+        }
+        if (secondary != null && secondary != primary)
+        {
+            availableWeapons.Add(secondary);
+            if (!ammoPerWeapon.ContainsKey(secondary))
+                ammoPerWeapon[secondary] = secondary.magazineSize;
+        }
+
+        if (availableWeapons.Count > 0)
+        {
+            if (weaponData == null || !availableWeapons.Contains(weaponData))
+            {
+                currentWeaponIndex = 0;
+                EquipWeaponByIndex(0);
+            }
+            else
+            {
+                currentWeaponIndex = availableWeapons.IndexOf(weaponData);
+                EquipWeapon(weaponData);
+            }
+        }
+        else
+        {
+            weaponData = null;
+            currentWeaponIndex = -1;
+            if (gunSpriteRenderer != null)
+                gunSpriteRenderer.sprite = null;
+            OnWeaponChanged?.Invoke(null);
+            OnAmmoChanged?.Invoke(0, 0);
+        }
+    }
+
+    /// <summary>
+    /// Sets the equipped loadout (backward-compatible list overload).
+    /// </summary>
+    public void SetLoadout(List<WeaponData> loadout)
+    {
+        WeaponData p = (loadout != null && loadout.Count > 0) ? loadout[0] : null;
+        WeaponData s = (loadout != null && loadout.Count > 1) ? loadout[1] : null;
+        SetEquippedSlots(p, s);
     }
 
     public void EquipWeaponByIndex(int index)

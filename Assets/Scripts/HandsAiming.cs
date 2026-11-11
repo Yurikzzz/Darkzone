@@ -16,11 +16,13 @@ public class HandsAiming : MonoBehaviour
     private Camera mainCam;
     private Vector3 initialScale;
     private PlayerHealth playerHealth;
+    private PlayerMovement playerMovement;
 
     private void Awake()
     {
         mainCam = Camera.main;
         playerHealth = GetComponent<PlayerHealth>();
+        playerMovement = GetComponent<PlayerMovement>();
 
         if (handsTransform == null)
             handsTransform = transform.Find("Hands");
@@ -64,6 +66,7 @@ public class HandsAiming : MonoBehaviour
     private void Update()
     {
         if (handsTransform == null || mainCam == null) return;
+        if (playerMovement != null && !playerMovement.CanMove) return;
 
         // Get cursor world position
         Vector3 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);

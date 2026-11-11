@@ -42,6 +42,35 @@ public class EvacTimerUI : MonoBehaviour
     /// <summary>Remaining seconds (read-only).</summary>
     public float TimeRemaining => timeRemaining;
 
+    /// <summary>Total countdown duration in seconds.</summary>
+    public float Duration
+    {
+        get => duration;
+        set => duration = value;
+    }
+
+    /// <summary>Vertical offset above object.</summary>
+    public Vector2 Offset
+    {
+        get => offset;
+        set => offset = value;
+    }
+
+    /// <summary>Color of the timer ring fill.</summary>
+    public Color RingFillColor
+    {
+        get => ringFillColor;
+        set
+        {
+            ringFillColor = value;
+            if (ringFill != null)
+            {
+                ringFill.startColor = ringFillColor;
+                ringFill.endColor = ringFillColor;
+            }
+        }
+    }
+
     // ────────────────────────────────────────────────────────────────────
 
     private void Awake()
