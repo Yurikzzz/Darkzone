@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40063cf269f361d45921ee59ac49cc11, type: 3}
+  m_Name: FragGrenade
+  m_EditorClassIdentifier: 
+  consumableName: Frag Grenade
+  description: Throws an explosive grenade that detonates after 1.5s, dealing 80
+    area damage and applying knockback.
+  icon: {fileID: 2868101353237766674, guid: 14f1b59c9280ce5449a7f183aa67e7c8, type: 3}
+  tintColor: {r: 1, g: 0.55, b: 0.15, a: 1}
+  type: 1
+  cooldown: 0.5
+  healAmount: 50
+  healEffectColor: {r: 0.2, g: 0.95, b: 0.35, a: 0.9}
+  grenadeDamage: 80
+  explosionRadius: 3.5
+  throwSpeed: 12
+  fuseTime: 1.5
+  explosionKnockback: 6
+  explosionColor: {r: 1, g: 0.5, b: 0.1, a: 0.9}

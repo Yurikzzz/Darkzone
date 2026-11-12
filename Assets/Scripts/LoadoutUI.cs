@@ -40,7 +40,7 @@ public class LoadoutUI : MonoBehaviour
     private const float WeaponCardHeight = 38f;
 
     // ---------- Palette ----------
-    private static readonly Color OverlayColor = new Color(0f, 0f, 0f, 0.65f);
+    private static readonly Color OverlayColor = new Color(0f, 0f, 0f, 0f); // Fully transparent overlay (no screen dimming, but blocks clicks behind)
     private static readonly Color BorderColor = new Color(0.20f, 0.24f, 0.32f, 1f);
     private static readonly Color PanelColor = new Color(0.07f, 0.09f, 0.12f, 1f);
     private static readonly Color HeaderColor = new Color(0.11f, 0.14f, 0.19f, 1f);
@@ -74,10 +74,12 @@ public class LoadoutUI : MonoBehaviour
     private GameObject equipmentView;
     private GameObject consumablesView;
     private Transform weaponsListContainer;
+    private Transform consumablesListContainer;
 
     private TabCategory currentTab = TabCategory.Weapons;
     private PlayerMovement playerMovement;
     private readonly List<GameObject> spawnedWeaponRows = new List<GameObject>();
+    private readonly List<GameObject> spawnedConsumableRows = new List<GameObject>();
     private readonly List<GameObject> spawnedConsumableSlots = new List<GameObject>();
     private int openedFrame = -1;
 
@@ -105,6 +107,7 @@ public class LoadoutUI : MonoBehaviour
         }
 
         BuildUI();
+        transform.SetAsLastSibling();
         menuRoot.SetActive(false);
     }
 
@@ -143,8 +146,13 @@ public class LoadoutUI : MonoBehaviour
     {
         openedFrame = Time.frameCount;
 
+        transform.SetAsLastSibling();
+
         if (menuRoot != null)
+        {
+            menuRoot.transform.SetAsLastSibling();
             menuRoot.SetActive(true);
+        }
 
         if (playerMovement == null)
         {
@@ -222,6 +230,8 @@ public class LoadoutUI : MonoBehaviour
 
         if (currentTab == TabCategory.Weapons)
             RefreshWeaponsStash(inv);
+        else if (currentTab == TabCategory.Consumables)
+            RefreshConsumablesStash(inv);
     }
 
     // =====================================================================
@@ -475,6 +485,7 @@ public class LoadoutUI : MonoBehaviour
 
     private GameObject CreateConsumableSlot(Transform parent, int number, ScriptableObject item)
     {
+        int slotIndex = number - 1;
         RectTransform slot = NewRect($"ConsumableSlot_{number}", parent);
         slot.gameObject.AddComponent<Image>().color = BorderColor;
         SetLE(slot.gameObject, 0f, ConsumableSlotHeight, 1f, 0f);
@@ -482,13 +493,35 @@ public class LoadoutUI : MonoBehaviour
         RectTransform inner = NewRect("InnerFill", slot);
         Stretch(inner, 1f, 1f, 1f, 1f);
         inner.gameObject.AddComponent<Image>().color = InsetColor;
-        AddLayout(inner.gameObject, true, 1f, new RectOffset(2, 2, 3, 3), TextAnchor.MiddleCenter);
+        AddLayout(inner.gameObject, true, 1f, new RectOffset(2, 2, 2, 2), TextAnchor.MiddleCenter);
 
-        TextMeshProUGUI num = NewText("Number", inner, number.ToString(), 10f, Grey, TextAlignmentOptions.Midline, FontStyles.Bold);
-        SetLE(num.gameObject, 0f, 12f, 1f, 0f);
+        TextMeshProUGUI num = NewText("Number", inner, number.ToString(), 9f, Grey, TextAlignmentOptions.Midline, FontStyles.Bold);
+        SetLE(num.gameObject, 0f, 10f, 1f, 0f);
 
-        TextMeshProUGUI label = NewText("Label", inner, item != null ? item.name : "EMPTY", 6f, DimText, TextAlignmentOptions.Midline, FontStyles.Normal);
+        string labelText = "EMPTY";
+        Color labelColor = DimText;
+        if (item is ConsumableData cd)
+        {
+            labelText = cd.consumableName;
+            labelColor = cd.tintColor;
+        }
+        else if (item != null)
+        {
+            labelText = item.name;
+            labelColor = Color.white;
+        }
+
+        TextMeshProUGUI label = NewText("Label", inner, labelText, 6f, labelColor, TextAlignmentOptions.Midline, FontStyles.Normal);
         SetLE(label.gameObject, 0f, 8f, 1f, 0f);
+
+        if (item != null)
+        {
+            Button unequip = NewButton("Unequip", inner, "✕", Red, 6f, () => {
+                if (PlayerInventory.Instance != null)
+                    PlayerInventory.Instance.UnequipConsumable(slotIndex);
+            });
+            SetLE(unequip.gameObject, 20f, 10f, 0f, 0f);
+        }
 
         return slot.gameObject;
     }
@@ -517,7 +550,7 @@ public class LoadoutUI : MonoBehaviour
 
         weaponsView = BuildWeaponsView(content);
         equipmentView = BuildPlaceholderView(content, "EquipmentView", "EQUIPMENT\nComing soon");
-        consumablesView = BuildPlaceholderView(content, "ConsumablesView", "CONSUMABLES\nComing soon");
+        consumablesView = BuildConsumablesView(content);
     }
 
     private void BuildTab(Transform parent, TabCategory tab, string label)
@@ -561,6 +594,169 @@ public class LoadoutUI : MonoBehaviour
 
         weaponsListContainer = list;
         return view.gameObject;
+    }
+
+    private GameObject BuildConsumablesView(Transform parent)
+    {
+        RectTransform view = NewRect("ConsumablesView", parent);
+        view.gameObject.AddComponent<Image>().color = InsetColor;
+        SetLE(view.gameObject, 0f, 0f, 1f, 1f);
+
+        RectTransform viewport = NewRect("Viewport", view);
+        Stretch(viewport, 3f, 3f, 3f, 3f);
+        viewport.gameObject.AddComponent<RectMask2D>();
+
+        RectTransform list = NewRect("Content", viewport);
+        list.anchorMin = new Vector2(0f, 1f);
+        list.anchorMax = new Vector2(1f, 1f);
+        list.pivot = new Vector2(0.5f, 1f);
+        list.anchoredPosition = Vector2.zero;
+        list.sizeDelta = Vector2.zero;
+
+        AddLayout(list.gameObject, true, 3f, new RectOffset(0, 0, 0, 0), TextAnchor.UpperLeft);
+        ContentSizeFitter fitter = list.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        ScrollRect scroll = view.gameObject.AddComponent<ScrollRect>();
+        scroll.viewport = viewport;
+        scroll.content = list;
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 14f;
+
+        consumablesListContainer = list;
+        return view.gameObject;
+    }
+
+    private void RefreshConsumablesStash(PlayerInventory inv)
+    {
+        if (consumablesListContainer == null) return;
+
+        foreach (GameObject row in spawnedConsumableRows)
+        {
+            if (row == null) continue;
+            row.SetActive(false);
+            Destroy(row);
+        }
+        spawnedConsumableRows.Clear();
+
+        var owned = inv.OwnedConsumables;
+        if (owned == null || owned.Count == 0)
+        {
+            RectTransform emptyBox = NewRect("EmptyNotice", consumablesListContainer);
+            SetLE(emptyBox.gameObject, 0f, 60f, 1f, 0f);
+            AddLayout(emptyBox.gameObject, true, 0f, new RectOffset(6, 6, 6, 6), TextAnchor.MiddleCenter);
+
+            TextMeshProUGUI msg = NewText("Msg", emptyBox, "No consumables in stash.\nDefeat enemies or open Darkzone chests to find some!", 8f, DimText, TextAlignmentOptions.Center, FontStyles.Normal);
+            SetLE(msg.gameObject, 0f, 0f, 1f, 1f);
+            spawnedConsumableRows.Add(emptyBox.gameObject);
+            return;
+        }
+
+        // Group counts by distinct consumable
+        var distinctItems = new List<ConsumableData>();
+        var itemCounts = new Dictionary<ConsumableData, int>();
+        foreach (var obj in owned)
+        {
+            if (obj is ConsumableData cd)
+            {
+                if (!itemCounts.ContainsKey(cd))
+                {
+                    itemCounts[cd] = 0;
+                    distinctItems.Add(cd);
+                }
+                itemCounts[cd]++;
+            }
+        }
+
+        foreach (var cd in distinctItems)
+        {
+            spawnedConsumableRows.Add(CreateConsumableCard(consumablesListContainer, cd, itemCounts[cd], inv));
+        }
+    }
+
+    private GameObject CreateConsumableCard(Transform parent, ConsumableData consumable, int count, PlayerInventory inv)
+    {
+        int equippedSlot = -1;
+        var equipped = inv.EquippedConsumables;
+        for (int i = 0; i < equipped.Count; i++)
+        {
+            if (equipped[i] == consumable)
+            {
+                equippedSlot = i;
+                break;
+            }
+        }
+        bool isEquipped = equippedSlot >= 0;
+
+        RectTransform card = NewRect($"ConsumableCard_{consumable.consumableName}", parent);
+        card.gameObject.AddComponent<Image>().color = isEquipped ? Amber : BorderColor;
+        SetLE(card.gameObject, 0f, WeaponCardHeight, 1f, 0f);
+
+        RectTransform inner = NewRect("InnerFill", card);
+        Stretch(inner, 1f, 1f, 1f, 1f);
+        inner.gameObject.AddComponent<Image>().color = CardColor;
+        AddLayout(inner.gameObject, false, 6f, new RectOffset(4, 4, 3, 3), TextAnchor.MiddleLeft);
+
+        // Thumbnail
+        RectTransform thumb = NewRect("ThumbBox", inner);
+        thumb.gameObject.AddComponent<Image>().color = InsetColor;
+        SetLE(thumb.gameObject, 32f, 30f, 0f, 0f);
+
+        RectTransform iconRt = NewRect("Icon", thumb);
+        Stretch(iconRt, 3f, 3f, 3f, 3f);
+        Image icon = iconRt.gameObject.AddComponent<Image>();
+        icon.sprite = consumable.icon;
+        icon.color = consumable.tintColor;
+        icon.preserveAspect = true;
+        icon.raycastTarget = false;
+
+        // Info
+        RectTransform info = NewRect("Info", inner);
+        SetLE(info.gameObject, 0f, -1f, 1f, 1f);
+        AddLayout(info.gameObject, true, 2f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleLeft);
+
+        TextMeshProUGUI title = NewText("Title", info, $"{consumable.consumableName} (x{count})", 9.5f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Bold);
+        SetLE(title.gameObject, 0f, 12f, 1f, 0f);
+
+        TextMeshProUGUI stats = NewText("Stats", info, consumable.GetStatsSummary(), 7f, Color.white, TextAlignmentOptions.MidlineLeft, FontStyles.Normal);
+        SetLE(stats.gameObject, 0f, 10f, 1f, 0f);
+
+        // Actions
+        RectTransform actions = NewRect("Actions", inner);
+        SetLE(actions.gameObject, 68f, 26f, 0f, 0f);
+        AddLayout(actions.gameObject, false, 3f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleRight);
+
+        if (isEquipped)
+        {
+            RectTransform badge = NewRect("Badge", actions);
+            badge.gameObject.AddComponent<Image>().color = new Color(Amber.r, Amber.g, Amber.b, 0.25f);
+            SetLE(badge.gameObject, 64f, 18f, 0f, 0f);
+
+            TextMeshProUGUI bTxt = NewText("Text", badge, $"SLOT {equippedSlot + 1}", 7f, Amber, TextAlignmentOptions.Center, FontStyles.Bold);
+            Stretch(bTxt.rectTransform, 0f, 0f, 0f, 0f);
+        }
+        else
+        {
+            Button equipBtn = NewButton("EquipBtn", actions, "EQUIP", Grey, 7f, () => {
+                // Find first free slot
+                for (int s = 0; s < inv.ConsumableSlotCount; s++)
+                {
+                    if (s >= inv.EquippedConsumables.Count || inv.EquippedConsumables[s] == null)
+                    {
+                        inv.EquipConsumable(consumable, s);
+                        return;
+                    }
+                }
+                // If all full, equip to slot 0
+                inv.EquipConsumable(consumable, 0);
+            });
+            SetLE(equipBtn.gameObject, 50f, 20f, 0f, 0f);
+        }
+
+        return card.gameObject;
     }
 
     private GameObject BuildPlaceholderView(Transform parent, string name, string message)

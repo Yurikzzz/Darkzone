@@ -52,6 +52,17 @@ public class LootChest : MonoBehaviour
     [Tooltip("Weapons that can drop from this chest. Excludes pistol by default.")]
     [SerializeField] private List<WeaponData> availableLoot = new List<WeaponData>();
 
+    [Header("Consumables Loot Pool")]
+    [Tooltip("Whether this chest also drops a consumable alongside the weapon.")]
+    [SerializeField] private bool dropConsumables = true;
+
+    [Tooltip("Consumables that can drop from this chest alongside weapons.")]
+    [SerializeField] private List<ConsumableData> availableConsumables = new List<ConsumableData>();
+
+    [Range(0f, 1f)]
+    [Tooltip("Chance that a consumable drops when the chest opens (1.0 = 100%).")]
+    [SerializeField] private float consumableDropChance = 1.0f;
+
     [Header("Popup & Fly Animation")]
     [Tooltip("Height the loot icon pops up above the chest.")]
     [SerializeField] private float popUpHeight = 0.85f;
@@ -74,6 +85,7 @@ public class LootChest : MonoBehaviour
     private SpriteRenderer chestRenderer;
     private Color originalChestColor = Color.white;
     private GameObject activePopupObj;
+    private GameObject activeConsumablePopupObj;
     private static Sprite radialGlowSprite;
 
     public bool IsOpened => isOpened;
@@ -81,6 +93,15 @@ public class LootChest : MonoBehaviour
 
     private void Awake()
     {
+        // Guard against duplicate LootChest components on the same GameObject
+        LootChest[] chests = GetComponents<LootChest>();
+        if (chests.Length > 1 && chests[0] != this)
+        {
+            enabled = false;
+            Destroy(this);
+            return;
+        }
+
         chestRenderer = GetComponent<SpriteRenderer>();
         if (chestRenderer != null)
         {
@@ -122,6 +143,12 @@ public class LootChest : MonoBehaviour
         {
             LoadDefaultLootPool();
         }
+
+        // Auto-populate available consumables pool if empty
+        if (availableConsumables == null || availableConsumables.Count == 0)
+        {
+            LoadDefaultConsumablesPool();
+        }
     }
 
     private void Start()
@@ -154,6 +181,11 @@ public class LootChest : MonoBehaviour
         {
             Destroy(activePopupObj);
         }
+
+        if (activeConsumablePopupObj != null)
+        {
+            Destroy(activeConsumablePopupObj);
+        }
     }
 
     private void LoadDefaultLootPool()
@@ -165,6 +197,19 @@ public class LootChest : MonoBehaviour
             if (w != null && !w.name.ToLower().Contains("pistol") && !availableLoot.Contains(w))
             {
                 availableLoot.Add(w);
+            }
+        }
+    }
+
+    private void LoadDefaultConsumablesPool()
+    {
+        availableConsumables = new List<ConsumableData>();
+        ConsumableData[] allConsumables = Resources.FindObjectsOfTypeAll<ConsumableData>();
+        foreach (var c in allConsumables)
+        {
+            if (c != null && !availableConsumables.Contains(c))
+            {
+                availableConsumables.Add(c);
             }
         }
     }
@@ -212,8 +257,17 @@ public class LootChest : MonoBehaviour
 
     private void StartOpening()
     {
+        if (isOpening || isOpened) return;
         isOpening = true;
-        promptUI.PromptText = openingText;
+
+        if (promptUI == null)
+            promptUI = GetComponent<InteractionPromptUI>();
+
+        if (promptUI != null)
+        {
+            promptUI.SetSuppressed(true);
+        }
+
         if (openTimer != null)
         {
             openTimer.StartTimer();
@@ -239,6 +293,7 @@ public class LootChest : MonoBehaviour
             if (promptUI != null)
             {
                 promptUI.PromptText = promptText;
+                promptUI.SetSuppressed(false);
             }
         }
     }
@@ -252,15 +307,23 @@ public class LootChest : MonoBehaviour
 
     /// <summary>
     /// Opens the chest, selects a random weapon, and triggers the animated loot drop sequence.
+    /// Also rolls for a consumable drop alongside the weapon.
     /// </summary>
     public void OpenChest()
     {
+        if (isOpened) return;
         isOpening = false;
         isOpened = true;
 
         if (promptUI != null)
         {
+            promptUI.SetSuppressed(true);
             promptUI.PromptText = "";
+        }
+
+        if (openTimer != null && openTimer.IsRunning)
+        {
+            openTimer.CancelTimer();
         }
 
         if (chestRenderer != null)
@@ -270,11 +333,27 @@ public class LootChest : MonoBehaviour
 
         WeaponData loot = SelectRandomLoot();
         LootRarity rarity = DetermineRarity();
+        ConsumableData consumableLoot = SelectRandomConsumable();
 
-        if (loot != null)
+        StartCoroutine(AnimateLootDrop(loot, rarity, consumableLoot));
+    }
+
+    private ConsumableData SelectRandomConsumable()
+    {
+        if (!dropConsumables || Random.value > consumableDropChance)
+            return null;
+
+        if (availableConsumables == null || availableConsumables.Count == 0)
         {
-            StartCoroutine(AnimateLootDrop(loot, rarity));
+            LoadDefaultConsumablesPool();
         }
+
+        if (availableConsumables != null && availableConsumables.Count > 0)
+        {
+            return availableConsumables[Random.Range(0, availableConsumables.Count)];
+        }
+
+        return null;
     }
 
     private WeaponData SelectRandomLoot()
@@ -330,58 +409,99 @@ public class LootChest : MonoBehaviour
         }
     }
 
-    private IEnumerator AnimateLootDrop(WeaponData weapon, LootRarity rarity)
+    private IEnumerator AnimateLootDrop(WeaponData weapon, LootRarity rarity, ConsumableData consumable)
     {
         Color rarityColor = GetRarityColor(rarity);
 
-        if (activePopupObj != null)
-        {
-            Destroy(activePopupObj);
-        }
-
-        // Create container for popup
-        activePopupObj = new GameObject($"LootPopup_{weapon.weaponName}");
-        activePopupObj.transform.position = transform.position;
-
-        // 1. Simulated Glow Aura (SpriteRenderer behind the weapon icon)
-        GameObject glowObj = new GameObject("RarityGlow");
-        glowObj.transform.SetParent(activePopupObj.transform, false);
-        glowObj.transform.localPosition = Vector3.zero;
-        glowObj.transform.localScale = new Vector3(2.4f, 2.4f, 1f);
-
-        SpriteRenderer glowRenderer = glowObj.AddComponent<SpriteRenderer>();
-        if (radialGlowSprite == null)
-        {
-            radialGlowSprite = CreateRadialGlowSprite();
-        }
-        glowRenderer.sprite = radialGlowSprite;
-        glowRenderer.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, 0.85f);
-        glowRenderer.sortingOrder = 30;
-
-        // 2. Weapon Icon
-        GameObject iconObj = new GameObject("WeaponIcon");
-        iconObj.transform.SetParent(activePopupObj.transform, false);
-        iconObj.transform.localPosition = Vector3.zero;
-        iconObj.transform.localScale = new Vector3(1.6f, 1.6f, 1f);
-
-        SpriteRenderer iconRenderer = iconObj.AddComponent<SpriteRenderer>();
-        iconRenderer.sprite = weapon.weaponSprite;
-        iconRenderer.sortingOrder = 31;
-
-        // 3. Floating World-Space Rarity Label
-        GameObject labelObj = new GameObject("Label");
-        labelObj.transform.SetParent(activePopupObj.transform, false);
-        labelObj.transform.localPosition = new Vector3(0f, 0.45f, 0f);
-
-        TextMeshPro labelTmp = labelObj.AddComponent<TextMeshPro>();
-        labelTmp.text = $"<b>{weapon.weaponName}</b>\n<size=75%><color=#{ColorUtility.ToHtmlStringRGB(rarityColor)}>[{rarity.ToString().ToUpper()}]</color></size>";
-        labelTmp.fontSize = 3.2f;
-        labelTmp.alignment = TextAlignmentOptions.Center;
-        labelTmp.color = Color.white;
-        labelTmp.sortingOrder = 32;
+        if (activePopupObj != null) Destroy(activePopupObj);
+        if (activeConsumablePopupObj != null) Destroy(activeConsumablePopupObj);
 
         Vector3 startPos = transform.position;
-        Vector3 peakPos = startPos + Vector3.up * popUpHeight;
+        Vector3 weaponPeakPos = startPos + Vector3.up * popUpHeight;
+        Vector3 consumablePeakPos = startPos + Vector3.up * (popUpHeight * 0.9f);
+
+        if (weapon != null && consumable != null)
+        {
+            weaponPeakPos += Vector3.left * 0.45f;
+            consumablePeakPos += Vector3.right * 0.55f;
+        }
+
+        SpriteRenderer weaponGlowRenderer = null;
+
+        // 1. Setup Weapon Popup (if present)
+        if (weapon != null)
+        {
+            activePopupObj = new GameObject($"LootPopup_{weapon.weaponName}");
+            activePopupObj.transform.position = startPos;
+
+            // Simulated Glow Aura
+            GameObject glowObj = new GameObject("RarityGlow");
+            glowObj.transform.SetParent(activePopupObj.transform, false);
+            glowObj.transform.localScale = new Vector3(2.4f, 2.4f, 1f);
+            weaponGlowRenderer = glowObj.AddComponent<SpriteRenderer>();
+            if (radialGlowSprite == null) radialGlowSprite = CreateRadialGlowSprite();
+            weaponGlowRenderer.sprite = radialGlowSprite;
+            weaponGlowRenderer.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, 0.85f);
+            weaponGlowRenderer.sortingOrder = 30;
+
+            // Weapon Icon
+            GameObject iconObj = new GameObject("WeaponIcon");
+            iconObj.transform.SetParent(activePopupObj.transform, false);
+            iconObj.transform.localScale = new Vector3(1.6f, 1.6f, 1f);
+            SpriteRenderer iconRenderer = iconObj.AddComponent<SpriteRenderer>();
+            iconRenderer.sprite = weapon.weaponSprite;
+            iconRenderer.sortingOrder = 31;
+
+            // Floating World-Space Rarity Label
+            GameObject labelObj = new GameObject("Label");
+            labelObj.transform.SetParent(activePopupObj.transform, false);
+            labelObj.transform.localPosition = new Vector3(0f, 0.45f, 0f);
+            TextMeshPro labelTmp = labelObj.AddComponent<TextMeshPro>();
+            labelTmp.text = $"<b>{weapon.weaponName}</b>\n<size=75%><color=#{ColorUtility.ToHtmlStringRGB(rarityColor)}>[{rarity.ToString().ToUpper()}]</color></size>";
+            labelTmp.fontSize = 3.2f;
+            labelTmp.alignment = TextAlignmentOptions.Center;
+            labelTmp.color = Color.white;
+            labelTmp.sortingOrder = 32;
+        }
+
+        // 2. Setup Consumable Popup (if present)
+        SpriteRenderer consumableGlowRenderer = null;
+        if (consumable != null)
+        {
+            activeConsumablePopupObj = new GameObject($"LootPopup_{consumable.consumableName}");
+            activeConsumablePopupObj.transform.position = startPos;
+
+            // Consumable Glow Aura
+            GameObject cGlowObj = new GameObject("ConsumableGlow");
+            cGlowObj.transform.SetParent(activeConsumablePopupObj.transform, false);
+            cGlowObj.transform.localScale = new Vector3(1.8f, 1.8f, 1f);
+            consumableGlowRenderer = cGlowObj.AddComponent<SpriteRenderer>();
+            if (radialGlowSprite == null) radialGlowSprite = CreateRadialGlowSprite();
+            consumableGlowRenderer.sprite = radialGlowSprite;
+            consumableGlowRenderer.color = new Color(consumable.tintColor.r, consumable.tintColor.g, consumable.tintColor.b, 0.75f);
+            consumableGlowRenderer.sortingOrder = 30;
+
+            // Consumable Icon (White Square placeholder or custom icon)
+            GameObject cIconObj = new GameObject("ConsumableIcon");
+            cIconObj.transform.SetParent(activeConsumablePopupObj.transform, false);
+            cIconObj.transform.localScale = new Vector3(1.2f, 1.2f, 1f);
+            SpriteRenderer cIconRenderer = cIconObj.AddComponent<SpriteRenderer>();
+            cIconRenderer.sprite = consumable.icon;
+            cIconRenderer.color = consumable.tintColor;
+            cIconRenderer.sortingOrder = 31;
+
+            // Floating World-Space Label
+            GameObject cLabelObj = new GameObject("Label");
+            cLabelObj.transform.SetParent(activeConsumablePopupObj.transform, false);
+            cLabelObj.transform.localPosition = new Vector3(0f, 0.45f, 0f);
+            TextMeshPro cLabelTmp = cLabelObj.AddComponent<TextMeshPro>();
+            string tintHex = ColorUtility.ToHtmlStringRGB(consumable.tintColor);
+            cLabelTmp.text = $"<b>{consumable.consumableName}</b>\n<size=75%><color=#{tintHex}>[CONSUMABLE]</color></size>";
+            cLabelTmp.fontSize = 2.8f;
+            cLabelTmp.alignment = TextAlignmentOptions.Center;
+            cLabelTmp.color = Color.white;
+            cLabelTmp.sortingOrder = 32;
+        }
 
         // --- Phase 1: Pop Up (0 to 0.35s) ---
         float popDuration = 0.35f;
@@ -390,9 +510,13 @@ public class LootChest : MonoBehaviour
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / popDuration);
-            // Smooth ease-out bounce
             float smoothT = Mathf.Sin(t * Mathf.PI * 0.5f);
-            activePopupObj.transform.position = Vector3.Lerp(startPos, peakPos, smoothT);
+
+            if (activePopupObj != null)
+                activePopupObj.transform.position = Vector3.Lerp(startPos, weaponPeakPos, smoothT);
+            if (activeConsumablePopupObj != null)
+                activeConsumablePopupObj.transform.position = Vector3.Lerp(startPos, consumablePeakPos, smoothT);
+
             yield return null;
         }
 
@@ -402,37 +526,56 @@ public class LootChest : MonoBehaviour
         {
             elapsed += Time.deltaTime;
 
-            // Gentle floating bob
+            // Floating bob
             float bob = Mathf.Sin(elapsed * 5f) * 0.06f;
-            activePopupObj.transform.position = peakPos + Vector3.up * bob;
+            float cBob = Mathf.Sin(elapsed * 5f + 1.2f) * 0.05f;
 
-            // Pulsing glow alpha
-            float pulse = 0.65f + 0.35f * Mathf.Sin(elapsed * 7f);
-            if (glowRenderer != null)
+            if (activePopupObj != null)
             {
-                glowRenderer.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, pulse);
+                activePopupObj.transform.position = weaponPeakPos + Vector3.up * bob;
+                if (weaponGlowRenderer != null)
+                {
+                    float pulse = 0.65f + 0.35f * Mathf.Sin(elapsed * 7f);
+                    weaponGlowRenderer.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, pulse);
+                }
+            }
+
+            if (activeConsumablePopupObj != null)
+            {
+                activeConsumablePopupObj.transform.position = consumablePeakPos + Vector3.up * cBob;
+                if (consumableGlowRenderer != null)
+                {
+                    float pulse = 0.60f + 0.30f * Mathf.Sin(elapsed * 7f + 1.5f);
+                    consumableGlowRenderer.color = new Color(consumable.tintColor.r, consumable.tintColor.g, consumable.tintColor.b, pulse);
+                }
             }
 
             yield return null;
         }
 
         // --- Phase 3: Fly into Player (~0.45s) ---
-        Vector3 flyStartPos = activePopupObj.transform.position;
+        Vector3 flyStartWeapon = activePopupObj != null ? activePopupObj.transform.position : startPos;
+        Vector3 flyStartConsumable = activeConsumablePopupObj != null ? activeConsumablePopupObj.transform.position : startPos;
         elapsed = 0f;
         while (elapsed < flyDuration)
         {
             elapsed += Time.deltaTime;
             float t = Mathf.Clamp01(elapsed / flyDuration);
-
-            // Ease-in acceleration toward player
             float curveT = t * t;
 
             Vector3 targetPlayerPos = playerTransform != null ? playerTransform.position : transform.position;
-            activePopupObj.transform.position = Vector3.Lerp(flyStartPos, targetPlayerPos, curveT);
 
-            // Scale down slightly as it absorbs into the player
-            float scale = Mathf.Lerp(1f, 0.4f, curveT);
-            activePopupObj.transform.localScale = Vector3.one * scale;
+            if (activePopupObj != null)
+            {
+                activePopupObj.transform.position = Vector3.Lerp(flyStartWeapon, targetPlayerPos, curveT);
+                activePopupObj.transform.localScale = Vector3.one * Mathf.Lerp(1f, 0.4f, curveT);
+            }
+
+            if (activeConsumablePopupObj != null)
+            {
+                activeConsumablePopupObj.transform.position = Vector3.Lerp(flyStartConsumable, targetPlayerPos, curveT);
+                activeConsumablePopupObj.transform.localScale = Vector3.one * Mathf.Lerp(1f, 0.35f, curveT);
+            }
 
             yield return null;
         }
@@ -440,14 +583,29 @@ public class LootChest : MonoBehaviour
         // --- Phase 4: Delivery into Player Inventory ---
         if (PlayerInventory.Instance != null)
         {
-            PlayerInventory.Instance.AddOwnedWeapon(weapon);
-            Debug.Log($"[LootChest] Added {weapon.weaponName} ({rarity}) to player inventory!");
+            if (weapon != null)
+            {
+                PlayerInventory.Instance.AddOwnedWeapon(weapon);
+                Debug.Log($"[LootChest] Added {weapon.weaponName} ({rarity}) to player inventory!");
+            }
+
+            if (consumable != null)
+            {
+                PlayerInventory.Instance.AddConsumable(consumable);
+                Debug.Log($"[LootChest] Added {consumable.consumableName} to player inventory!");
+            }
         }
 
         if (activePopupObj != null)
         {
             Destroy(activePopupObj);
             activePopupObj = null;
+        }
+
+        if (activeConsumablePopupObj != null)
+        {
+            Destroy(activeConsumablePopupObj);
+            activeConsumablePopupObj = null;
         }
     }
 
@@ -467,7 +625,17 @@ public class LootChest : MonoBehaviour
             activePopupObj = null;
         }
 
+        if (activeConsumablePopupObj != null)
+        {
+            if (Application.isPlaying)
+                Destroy(activeConsumablePopupObj);
+            else
+                DestroyImmediate(activeConsumablePopupObj);
+            activeConsumablePopupObj = null;
+        }
+
         isOpened = false;
+        isOpening = false;
 
         if (chestRenderer == null)
             chestRenderer = GetComponent<SpriteRenderer>();
@@ -483,6 +651,7 @@ public class LootChest : MonoBehaviour
         if (promptUI != null)
         {
             promptUI.PromptText = promptText;
+            promptUI.SetSuppressed(false);
         }
     }
 

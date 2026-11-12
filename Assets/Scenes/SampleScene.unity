@@ -1698,11 +1698,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!1 &422610838 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4195152935592431913, guid: 9b059a48aff3a2c409926a68d216abf9, type: 3}
-  m_PrefabInstance: {fileID: 1569338140981125592}
-  m_PrefabAsset: {fileID: 0}
 --- !u!21 &437523148
 Material:
   serializedVersion: 8
@@ -2306,7 +2301,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.75}
+  m_Color: {r: 0, g: 0, b: 0, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -7069,6 +7064,7 @@ GameObject:
   - component: {fileID: 1488159926}
   - component: {fileID: 1488159927}
   - component: {fileID: 1488159928}
+  - component: {fileID: 1488159929}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -7386,11 +7382,33 @@ MonoBehaviour:
   primaryWeapon: {fileID: 11400000, guid: b5a8c204fde2c7e458a1c0aece663f0b, type: 2}
   secondaryWeapon: {fileID: 0}
   consumableSlotCount: 4
-  equippedConsumables: []
+  equippedConsumables:
+  - {fileID: 0}
   ownedWeapons:
   - {fileID: 11400000, guid: b5a8c204fde2c7e458a1c0aece663f0b, type: 2}
   ownedEquipment: []
-  ownedConsumables: []
+  ownedConsumables:
+  - {fileID: 11400000, guid: 9dbec8b62f1e73f4795d123cfb316983, type: 2}
+  - {fileID: 11400000, guid: 9dbec8b62f1e73f4795d123cfb316983, type: 2}
+--- !u!114 &1488159929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1488159915}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 191e894790153c7408d45e683900f27c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slot1Key: 51
+  slot2Key: 52
+  slot3Key: 53
+  slot4Key: 54
+  quickGrenadeKey: 103
+  quickHealKey: 104
+  globalCooldown: 0.5
 --- !u!1 &1491418518
 GameObject:
   m_ObjectHideFlags: 0
@@ -8114,6 +8132,7 @@ GameObject:
   - component: {fileID: 1800820014}
   - component: {fileID: 1800820013}
   - component: {fileID: 1800820012}
+  - component: {fileID: 1800820016}
   m_Layer: 0
   m_Name: HUD Canvas
   m_TagString: Untagged
@@ -8207,6 +8226,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1800820016
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1800820011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2402e9d4706e5b14da9073dc6de29744, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  panelPosition: {x: 0, y: 18}
+  slotSize: {x: 32, y: 32}
+  slotSpacing: 6
 --- !u!1 &1803604525
 GameObject:
   m_ObjectHideFlags: 0
@@ -10563,142 +10597,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 4195152935592431913, guid: 9b059a48aff3a2c409926a68d216abf9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1569338140981125598}
-    - targetCorrespondingSourceObject: {fileID: 4195152935592431913, guid: 9b059a48aff3a2c409926a68d216abf9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1569338140981125597}
-    - targetCorrespondingSourceObject: {fileID: 4195152935592431913, guid: 9b059a48aff3a2c409926a68d216abf9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1569338140981125596}
-    - targetCorrespondingSourceObject: {fileID: 4195152935592431913, guid: 9b059a48aff3a2c409926a68d216abf9, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1569338140981125595}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9b059a48aff3a2c409926a68d216abf9, type: 3}
 --- !u!4 &1569338140981125593 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1603479645064670988, guid: 9b059a48aff3a2c409926a68d216abf9, type: 3}
   m_PrefabInstance: {fileID: 1569338140981125592}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1569338140981125595
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 422610838}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d953d35e64937042bc76c2c0e9e29c4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  openDuration: 3
-  interactKey: 101
-  promptText: '[E] Open Chest'
-  openingText: Opening...
-  timerOffset: {x: 0, y: 1.2}
-  defaultRarity: 1
-  randomizeRarity: 1
-  availableLoot:
-  - {fileID: 11400000, guid: ecb46f00669e4224285b7ac6d5aa98b8, type: 2}
-  - {fileID: 11400000, guid: bc43c9a74b6be004892b897bdfa3d454, type: 2}
-  - {fileID: 11400000, guid: 8bb8d0cd6b4c3cb4eb03b5035f5f478c, type: 2}
-  - {fileID: 11400000, guid: e7b17ef7008e705498c3bd969f344c70, type: 2}
-  popUpHeight: 0.85
-  hoverDuration: 1
-  flyDuration: 0.45
-  openedChestColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
---- !u!114 &1569338140981125596
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 422610838}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c568a2276352e6c46bbf466d960b7729, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  duration: 3
-  offset: {x: 0, y: 1.2}
-  ringRadius: 0.5
-  ringThickness: 0.08
-  ringSegments: 64
-  ringBackgroundColor: {r: 0.2, g: 0.2, b: 0.2, a: 0.5}
-  ringFillColor: {r: 1, g: 0.75, b: 0.2, a: 0.95}
-  timerTextColor: {r: 1, g: 1, b: 1, a: 1}
-  textFontSize: 4
-  sortingOrder: 110
---- !u!114 &1569338140981125597
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 422610838}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e1490c82dc0c8a94e995342d82056669, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  promptText: '[E] Open Chest'
-  fontSize: 3
-  offset: {x: 0, y: 1.5}
-  textColor: {r: 1, g: 1, b: 1, a: 1}
-  backgroundColor: {r: 0, g: 0, b: 0, a: 0.6}
-  paddingX: 0.3
-  paddingY: 0.15
-  sortingOrder: 100
-  fadeDuration: 0.15
---- !u!61 &1569338140981125598
-BoxCollider2D:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 422610838}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ForceSendLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ForceReceiveLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_ContactCaptureLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_CallbackLayers:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  m_IsTrigger: 1
-  m_UsedByEffector: 0
-  m_CompositeOperation: 0
-  m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_SpriteTilingProperty:
-    border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 1, y: 1}
-    newSize: {x: 1, y: 1}
-    adaptiveTilingThreshold: 0.5
-    drawMode: 0
-    adaptiveTiling: 0
-  m_AutoTiling: 0
-  m_Size: {x: 2, y: 2}
-  m_EdgeRadius: 0
 --- !u!1001 &3560039588418730372
 PrefabInstance:
   m_ObjectHideFlags: 0

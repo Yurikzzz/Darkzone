@@ -226,4 +226,95 @@ public class PlayerInventory : MonoBehaviour
         ownedWeapons = new List<WeaponData>(weapons);
         OnInventoryChanged?.Invoke();
     }
+
+    // ── Consumables API ─────────────────────────────────────────────────
+
+    /// <summary>
+    /// Adds a consumable to the player's owned items.
+    /// If an equipped quick-slot is currently empty, automatically equips it.
+    /// </summary>
+    public void AddConsumable(ConsumableData consumable)
+    {
+        if (consumable == null) return;
+
+        ownedConsumables.Add(consumable);
+
+        // Auto-equip into first empty quick-slot if available
+        for (int i = 0; i < consumableSlotCount; i++)
+        {
+            if (i >= equippedConsumables.Count)
+            {
+                equippedConsumables.Add(consumable);
+                break;
+            }
+            else if (equippedConsumables[i] == null)
+            {
+                equippedConsumables[i] = consumable;
+                break;
+            }
+        }
+
+        OnInventoryChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Equips a consumable into the specified quick-slot (0-3).
+    /// </summary>
+    public bool EquipConsumable(ConsumableData consumable, int slotIndex)
+    {
+        if (consumable == null || slotIndex < 0 || slotIndex >= consumableSlotCount)
+            return false;
+
+        while (equippedConsumables.Count < consumableSlotCount)
+            equippedConsumables.Add(null);
+
+        if (!ownedConsumables.Contains(consumable))
+            ownedConsumables.Add(consumable);
+
+        equippedConsumables[slotIndex] = consumable;
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>
+    /// Unequips the consumable from the specified quick-slot.
+    /// </summary>
+    public bool UnequipConsumable(int slotIndex)
+    {
+        if (slotIndex < 0 || slotIndex >= equippedConsumables.Count)
+            return false;
+
+        equippedConsumables[slotIndex] = null;
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>
+    /// Uses and consumes 1 item from the specified quick-slot.
+    /// Returns true if an item was successfully consumed.
+    /// </summary>
+    public bool ConsumeEquippedSlot(int slotIndex, out ConsumableData consumed)
+    {
+        consumed = null;
+        if (slotIndex < 0 || slotIndex >= equippedConsumables.Count)
+            return false;
+
+        ConsumableData item = equippedConsumables[slotIndex] as ConsumableData;
+        if (item == null)
+            return false;
+
+        consumed = item;
+
+        // Remove 1 instance from owned stash
+        ownedConsumables.Remove(item);
+
+        // If no more copies of this consumable exist in stash, clear the slot
+        if (!ownedConsumables.Contains(item))
+        {
+            equippedConsumables[slotIndex] = null;
+        }
+
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
 }

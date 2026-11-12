@@ -204,6 +204,11 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bc43c9a74b6be004892b897bdfa3d454, type: 2}
   - {fileID: 11400000, guid: 8bb8d0cd6b4c3cb4eb03b5035f5f478c, type: 2}
   - {fileID: 11400000, guid: e7b17ef7008e705498c3bd969f344c70, type: 2}
+  dropConsumables: 1
+  availableConsumables:
+  - {fileID: 11400000, guid: 9dbec8b62f1e73f4795d123cfb316983, type: 2}
+  - {fileID: 11400000, guid: 8b4dfe0417916b545a811855954f2d70, type: 2}
+  consumableDropChance: 1
   popUpHeight: 0.85
   hoverDuration: 1
   flyDuration: 0.45

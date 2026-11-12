@@ -36,6 +36,7 @@ public class InteractionPromptUI : MonoBehaviour
     private TextMeshPro textMesh;
     private SpriteRenderer bgRenderer;
     private bool playerInRange;
+    private bool isSuppressed;
     private float currentAlpha;
 
     /// <summary>
@@ -61,6 +62,22 @@ public class InteractionPromptUI : MonoBehaviour
     public void SetVisible(bool visible)
     {
         playerInRange = visible;
+    }
+
+    /// <summary>
+    /// When suppressed, the prompt is immediately hidden regardless of player proximity.
+    /// Used when opening chests or interacting so only the progress wheel is shown.
+    /// </summary>
+    public void SetSuppressed(bool suppress)
+    {
+        isSuppressed = suppress;
+        if (suppress)
+        {
+            currentAlpha = 0f;
+            SetAlpha(0f);
+            if (promptRoot != null)
+                promptRoot.SetActive(false);
+        }
     }
 
     // ────────────────────────────────────────────────────────────────────
@@ -92,7 +109,7 @@ public class InteractionPromptUI : MonoBehaviour
 
     private void Update()
     {
-        float targetAlpha = playerInRange ? 1f : 0f;
+        float targetAlpha = (playerInRange && !isSuppressed && !string.IsNullOrEmpty(promptText)) ? 1f : 0f;
 
         if (fadeDuration > 0f)
             currentAlpha = Mathf.MoveTowards(currentAlpha, targetAlpha, Time.deltaTime / fadeDuration);

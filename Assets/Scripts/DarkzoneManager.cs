@@ -102,7 +102,17 @@ public class DarkzoneManager : MonoBehaviour
             }
         }
 
-        // 5. Reset all LootChests in the zone
+        // 5. Clean up any dropped consumable pickups on the ground
+        ConsumablePickup[] pickups = FindObjectsByType<ConsumablePickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var pickup in pickups)
+        {
+            if (pickup != null && pickup.gameObject.scene.IsValid())
+            {
+                SafeDestroy(pickup.gameObject);
+            }
+        }
+
+        // 6. Reset all LootChests in the zone
         LootChest[] chests = FindObjectsByType<LootChest>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var chest in chests)
         {
