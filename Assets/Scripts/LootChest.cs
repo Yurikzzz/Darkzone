@@ -67,6 +67,22 @@ public class LootChest : MonoBehaviour
     [Tooltip("Height the loot icon pops up above the chest.")]
     [SerializeField] private float popUpHeight = 0.85f;
 
+    [Tooltip("Horizontal spacing between weapon and consumable popups when both drop together.")]
+    [SerializeField] private float dualDropHorizontalSpacing = 2.0f;
+
+    [Tooltip("Scale applied to the dropped weapon icon.")]
+    [SerializeField] private float weaponIconScale = 1.15f;
+
+    [Tooltip("Scale applied to the dropped consumable icon.")]
+    [SerializeField] private float consumableIconScale = 0.9f;
+
+    [Tooltip("Scale multiplier applied to the silhouette rarity border around weapon/equipment drops.")]
+    [SerializeField] private float rarityBorderScale = 1.02f;
+
+    [Tooltip("Thickness in sprite pixels for the silhouette border outline.")]
+    [Min(1)]
+    [SerializeField] private int rarityBorderOutlinePixels = 2;
+
     [Tooltip("Time in seconds the icon stays hovering above the chest before flying to the player.")]
     [SerializeField] private float hoverDuration = 1.0f;
 
@@ -87,6 +103,7 @@ public class LootChest : MonoBehaviour
     private GameObject activePopupObj;
     private GameObject activeConsumablePopupObj;
     private static Sprite radialGlowSprite;
+    private static readonly Dictionary<Sprite, Sprite> silhouetteBorderCache = new Dictionary<Sprite, Sprite>();
 
     public bool IsOpened => isOpened;
     public bool IsOpening => isOpening;
@@ -420,12 +437,13 @@ public class LootChest : MonoBehaviour
 
         Vector3 startPos = transform.position;
         Vector3 weaponPeakPos = startPos + Vector3.up * popUpHeight;
-        Vector3 consumablePeakPos = startPos + Vector3.up * (popUpHeight * 0.9f);
+        Vector3 consumablePeakPos = startPos + Vector3.up * (popUpHeight * 0.95f);
 
         if (weapon != null && consumable != null)
         {
-            weaponPeakPos += Vector3.left * 0.45f;
-            consumablePeakPos += Vector3.right * 0.55f;
+            float halfSpacing = dualDropHorizontalSpacing * 0.5f;
+            weaponPeakPos += Vector3.left * halfSpacing;
+            consumablePeakPos += Vector3.right * halfSpacing;
         }
 
         SpriteRenderer weaponGlowRenderer = null;
@@ -439,31 +457,34 @@ public class LootChest : MonoBehaviour
             // Simulated Glow Aura
             GameObject glowObj = new GameObject("RarityGlow");
             glowObj.transform.SetParent(activePopupObj.transform, false);
-            glowObj.transform.localScale = new Vector3(2.4f, 2.4f, 1f);
+            glowObj.transform.localScale = new Vector3(1.9f, 1.9f, 1f);
             weaponGlowRenderer = glowObj.AddComponent<SpriteRenderer>();
             if (radialGlowSprite == null) radialGlowSprite = CreateRadialGlowSprite();
             weaponGlowRenderer.sprite = radialGlowSprite;
             weaponGlowRenderer.color = new Color(rarityColor.r, rarityColor.g, rarityColor.b, 0.85f);
             weaponGlowRenderer.sortingOrder = 30;
 
+            // Rarity-Colored Silhouette Border directly behind the icon
+            AttachRarityBorder(activePopupObj.transform, weapon.weaponSprite, rarityColor, weaponIconScale * rarityBorderScale, rarityBorderOutlinePixels);
+
             // Weapon Icon
             GameObject iconObj = new GameObject("WeaponIcon");
             iconObj.transform.SetParent(activePopupObj.transform, false);
-            iconObj.transform.localScale = new Vector3(1.6f, 1.6f, 1f);
+            iconObj.transform.localScale = new Vector3(weaponIconScale, weaponIconScale, 1f);
             SpriteRenderer iconRenderer = iconObj.AddComponent<SpriteRenderer>();
             iconRenderer.sprite = weapon.weaponSprite;
-            iconRenderer.sortingOrder = 31;
+            iconRenderer.sortingOrder = 32;
 
             // Floating World-Space Rarity Label
             GameObject labelObj = new GameObject("Label");
             labelObj.transform.SetParent(activePopupObj.transform, false);
-            labelObj.transform.localPosition = new Vector3(0f, 0.45f, 0f);
+            labelObj.transform.localPosition = new Vector3(0f, 0.52f, 0f);
             TextMeshPro labelTmp = labelObj.AddComponent<TextMeshPro>();
             labelTmp.text = $"<b>{weapon.weaponName}</b>\n<size=75%><color=#{ColorUtility.ToHtmlStringRGB(rarityColor)}>[{rarity.ToString().ToUpper()}]</color></size>";
-            labelTmp.fontSize = 3.2f;
+            labelTmp.fontSize = 2.8f;
             labelTmp.alignment = TextAlignmentOptions.Center;
             labelTmp.color = Color.white;
-            labelTmp.sortingOrder = 32;
+            labelTmp.sortingOrder = 33;
         }
 
         // 2. Setup Consumable Popup (if present)
@@ -476,7 +497,7 @@ public class LootChest : MonoBehaviour
             // Consumable Glow Aura
             GameObject cGlowObj = new GameObject("ConsumableGlow");
             cGlowObj.transform.SetParent(activeConsumablePopupObj.transform, false);
-            cGlowObj.transform.localScale = new Vector3(1.8f, 1.8f, 1f);
+            cGlowObj.transform.localScale = new Vector3(1.5f, 1.5f, 1f);
             consumableGlowRenderer = cGlowObj.AddComponent<SpriteRenderer>();
             if (radialGlowSprite == null) radialGlowSprite = CreateRadialGlowSprite();
             consumableGlowRenderer.sprite = radialGlowSprite;
@@ -486,7 +507,7 @@ public class LootChest : MonoBehaviour
             // Consumable Icon (White Square placeholder or custom icon)
             GameObject cIconObj = new GameObject("ConsumableIcon");
             cIconObj.transform.SetParent(activeConsumablePopupObj.transform, false);
-            cIconObj.transform.localScale = new Vector3(1.2f, 1.2f, 1f);
+            cIconObj.transform.localScale = new Vector3(consumableIconScale, consumableIconScale, 1f);
             SpriteRenderer cIconRenderer = cIconObj.AddComponent<SpriteRenderer>();
             cIconRenderer.sprite = consumable.icon;
             cIconRenderer.color = consumable.tintColor;
@@ -495,11 +516,11 @@ public class LootChest : MonoBehaviour
             // Floating World-Space Label
             GameObject cLabelObj = new GameObject("Label");
             cLabelObj.transform.SetParent(activeConsumablePopupObj.transform, false);
-            cLabelObj.transform.localPosition = new Vector3(0f, 0.45f, 0f);
+            cLabelObj.transform.localPosition = new Vector3(0f, 0.50f, 0f);
             TextMeshPro cLabelTmp = cLabelObj.AddComponent<TextMeshPro>();
             string tintHex = ColorUtility.ToHtmlStringRGB(consumable.tintColor);
             cLabelTmp.text = $"<b>{consumable.consumableName}</b>\n<size=75%><color=#{tintHex}>[CONSUMABLE]</color></size>";
-            cLabelTmp.fontSize = 2.8f;
+            cLabelTmp.fontSize = 2.5f;
             cLabelTmp.alignment = TextAlignmentOptions.Center;
             cLabelTmp.color = Color.white;
             cLabelTmp.sortingOrder = 32;
@@ -683,5 +704,122 @@ public class LootChest : MonoBehaviour
         }
         tex.Apply();
         return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 32f);
+    }
+
+    /// <summary>
+    /// Attaches a solid rarity-colored silhouette border directly behind a weapon or equipment icon.
+    /// </summary>
+    private static SpriteRenderer AttachRarityBorder(Transform parent, Sprite itemSprite, Color rarityColor, float borderScale, int outlinePixels)
+    {
+        if (itemSprite == null) return null;
+
+        Sprite borderSprite = GetOrCreateSilhouetteSprite(itemSprite, outlinePixels);
+        if (borderSprite == null) return null;
+
+        GameObject borderObj = new GameObject("RarityBorder");
+        borderObj.transform.SetParent(parent, false);
+        borderObj.transform.localScale = new Vector3(borderScale, borderScale, 1f);
+
+        SpriteRenderer borderRenderer = borderObj.AddComponent<SpriteRenderer>();
+        borderRenderer.sprite = borderSprite;
+        borderRenderer.color = rarityColor;
+        borderRenderer.sortingOrder = 31;
+        return borderRenderer;
+    }
+
+    /// <summary>
+    /// Generates and caches a solid-white dilated silhouette sprite matching the item's exact shape.
+    /// </summary>
+    private static Sprite GetOrCreateSilhouetteSprite(Sprite sourceSprite, int outlinePixels)
+    {
+        if (sourceSprite == null) return null;
+        if (silhouetteBorderCache.TryGetValue(sourceSprite, out Sprite cached) && cached != null)
+            return cached;
+
+        Texture2D sourceTex = sourceSprite.texture;
+        if (sourceTex == null) return null;
+
+        Rect rect = sourceSprite.textureRect;
+        int srcX = Mathf.RoundToInt(rect.x);
+        int srcY = Mathf.RoundToInt(rect.y);
+        int w = Mathf.Max(1, Mathf.RoundToInt(rect.width));
+        int h = Mathf.Max(1, Mathf.RoundToInt(rect.height));
+
+        Color[] srcPixels;
+        if (sourceTex.isReadable)
+        {
+            srcPixels = sourceTex.GetPixels(srcX, srcY, w, h);
+        }
+        else
+        {
+            RenderTexture prevActive = RenderTexture.active;
+            RenderTexture rt = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32);
+            Vector2 uvScale = new Vector2(rect.width / sourceTex.width, rect.height / sourceTex.height);
+            Vector2 uvOffset = new Vector2(rect.x / sourceTex.width, rect.y / sourceTex.height);
+            Graphics.Blit(sourceTex, rt, uvScale, uvOffset);
+            RenderTexture.active = rt;
+
+            Texture2D readable = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            readable.ReadPixels(new Rect(0, 0, w, h), 0, 0);
+            readable.Apply();
+            srcPixels = readable.GetPixels();
+
+            RenderTexture.active = prevActive;
+            RenderTexture.ReleaseTemporary(rt);
+            if (Application.isPlaying)
+                Destroy(readable);
+            else
+                DestroyImmediate(readable);
+        }
+
+        int pad = Mathf.Max(1, outlinePixels);
+        int outW = w + pad * 2;
+        int outH = h + pad * 2;
+        int padSq = pad * pad;
+
+        Color[] outPixels = new Color[outW * outH];
+        for (int y = 0; y < h; y++)
+        {
+            int rowOffset = y * w;
+            for (int x = 0; x < w; x++)
+            {
+                if (srcPixels[rowOffset + x].a <= 0.1f)
+                    continue;
+
+                int cx = x + pad;
+                int cy = y + pad;
+                for (int dy = -pad; dy <= pad; dy++)
+                {
+                    int py = cy + dy;
+                    int outRow = py * outW;
+                    int dySq = dy * dy;
+                    for (int dx = -pad; dx <= pad; dx++)
+                    {
+                        if (dx * dx + dySq <= padSq)
+                            outPixels[outRow + (cx + dx)] = Color.white;
+                    }
+                }
+            }
+        }
+
+        Texture2D borderTex = new Texture2D(outW, outH, TextureFormat.RGBA32, false);
+        borderTex.filterMode = sourceTex.filterMode;
+        borderTex.wrapMode = TextureWrapMode.Clamp;
+        borderTex.SetPixels(outPixels);
+        borderTex.Apply();
+
+        Vector2 pivotInTrimmedRect = sourceSprite.pivot - sourceSprite.textureRectOffset;
+        Vector2 normalizedPivot = new Vector2(
+            (pivotInTrimmedRect.x + pad) / outW,
+            (pivotInTrimmedRect.y + pad) / outH);
+
+        Sprite result = Sprite.Create(
+            borderTex,
+            new Rect(0f, 0f, outW, outH),
+            normalizedPivot,
+            sourceSprite.pixelsPerUnit);
+
+        silhouetteBorderCache[sourceSprite] = result;
+        return result;
     }
 }
