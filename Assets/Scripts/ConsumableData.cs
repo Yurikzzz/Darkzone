@@ -61,6 +61,23 @@ public class ConsumableData : ScriptableObject
     public Color explosionColor = new Color(1f, 0.55f, 0.1f, 0.9f);
 
     /// <summary>
+    /// True when this object is an independent runtime instance cloned for an inventory item.
+    /// </summary>
+    [NonSerialized]
+    public bool isRuntimeInstance;
+
+    /// <summary>
+    /// Creates an independent runtime instance of this consumable with its own separate stats.
+    /// </summary>
+    public ConsumableData CreateRuntimeInstance()
+    {
+        ConsumableData instance = Instantiate(this);
+        instance.name = name;
+        instance.isRuntimeInstance = true;
+        return instance;
+    }
+
+    /// <summary>
     /// Formats a concise stats string for UI cards.
     /// </summary>
     public string GetStatsSummary()

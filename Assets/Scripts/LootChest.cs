@@ -194,7 +194,7 @@ public class LootChest : MonoBehaviour
         WeaponData[] allWeapons = Resources.FindObjectsOfTypeAll<WeaponData>();
         foreach (var w in allWeapons)
         {
-            if (w != null && !w.name.ToLower().Contains("pistol") && !availableLoot.Contains(w))
+            if (w != null && !w.isRuntimeInstance && !w.name.ToLower().Contains("pistol") && !availableLoot.Contains(w))
             {
                 availableLoot.Add(w);
             }
@@ -207,7 +207,7 @@ public class LootChest : MonoBehaviour
         ConsumableData[] allConsumables = Resources.FindObjectsOfTypeAll<ConsumableData>();
         foreach (var c in allConsumables)
         {
-            if (c != null && !availableConsumables.Contains(c))
+            if (c != null && !c.isRuntimeInstance && !availableConsumables.Contains(c))
             {
                 availableConsumables.Add(c);
             }
@@ -350,7 +350,8 @@ public class LootChest : MonoBehaviour
 
         if (availableConsumables != null && availableConsumables.Count > 0)
         {
-            return availableConsumables[Random.Range(0, availableConsumables.Count)];
+            ConsumableData template = availableConsumables[Random.Range(0, availableConsumables.Count)];
+            return template != null ? template.CreateRuntimeInstance() : null;
         }
 
         return null;
@@ -370,7 +371,8 @@ public class LootChest : MonoBehaviour
         if (validLoot.Count > 0)
         {
             int index = Random.Range(0, validLoot.Count);
-            return validLoot[index];
+            WeaponData template = validLoot[index];
+            return template != null ? template.CreateRuntimeInstance() : null;
         }
 
         return null;

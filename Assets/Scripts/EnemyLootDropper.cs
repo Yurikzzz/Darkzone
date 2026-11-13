@@ -59,7 +59,7 @@ public class EnemyLootDropper : MonoBehaviour
         ConsumableData[] allConsumables = Resources.FindObjectsOfTypeAll<ConsumableData>();
         foreach (var c in allConsumables)
         {
-            if (c != null && !dropPool.Contains(c))
+            if (c != null && !c.isRuntimeInstance && !dropPool.Contains(c))
             {
                 dropPool.Add(c);
             }
@@ -90,11 +90,13 @@ public class EnemyLootDropper : MonoBehaviour
         ConsumableData chosen = dropPool[Random.Range(0, dropPool.Count)];
         if (chosen == null) return;
 
-        GameObject pickupObj = new GameObject($"Pickup_{chosen.consumableName}");
+        ConsumableData instance = chosen.CreateRuntimeInstance();
+
+        GameObject pickupObj = new GameObject($"Pickup_{instance.consumableName}");
         pickupObj.transform.position = transform.position;
 
         ConsumablePickup pickup = pickupObj.AddComponent<ConsumablePickup>();
-        pickup.Initialize(chosen);
+        pickup.Initialize(instance);
 
         Vector2 randomDir = Random.insideUnitCircle.normalized;
         if (randomDir == Vector2.zero) randomDir = Vector2.up;

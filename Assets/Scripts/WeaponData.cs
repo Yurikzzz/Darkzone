@@ -62,4 +62,21 @@ public class WeaponData : ScriptableObject
     [Tooltip("Duration the tracer remains visible before fading out.")]
     [Range(0.01f, 1f)]
     public float trailFadeTime = 0.25f;
+
+    /// <summary>
+    /// True when this object is an independent runtime instance cloned for an inventory item.
+    /// </summary>
+    [System.NonSerialized]
+    public bool isRuntimeInstance;
+
+    /// <summary>
+    /// Creates an independent runtime instance of this weapon with its own separate stats.
+    /// </summary>
+    public WeaponData CreateRuntimeInstance()
+    {
+        WeaponData instance = Instantiate(this);
+        instance.name = name;
+        instance.isRuntimeInstance = true;
+        return instance;
+    }
 }
