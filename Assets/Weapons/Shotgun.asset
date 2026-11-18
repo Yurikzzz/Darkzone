@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: Shotgun
   isAutomatic: 0
+  caliber: 12GA
   fireRate: 1.2
   bulletsPerShot: 8
   bulletSpread: 10

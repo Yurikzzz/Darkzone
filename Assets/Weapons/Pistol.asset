@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: Pistol
   isAutomatic: 0
+  caliber: 9MM
   fireRate: 5
   bulletsPerShot: 1
   bulletSpread: 1

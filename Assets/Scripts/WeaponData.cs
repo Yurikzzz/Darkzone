@@ -10,6 +10,9 @@ public class WeaponData : ScriptableObject
     [Tooltip("If true, holding down fire fires continuously. If false, each click fires one shot.")]
     public bool isAutomatic = false;
 
+    [Tooltip("Ammunition caliber label shown on the HUD.")]
+    public string caliber = "9MM";
+
     [Header("Firing Parameters")]
     [Tooltip("Shots per second. For semi-auto, sets the maximum fire rate limit.")]
     [Min(0.01f)]

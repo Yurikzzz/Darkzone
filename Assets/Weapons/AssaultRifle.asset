@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: Assault Rifle
   isAutomatic: 1
+  caliber: 5.56MM
   fireRate: 10
   bulletsPerShot: 1
   bulletSpread: 1.8

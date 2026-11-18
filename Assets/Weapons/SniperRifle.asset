@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   weaponName: Sniper Rifle
   isAutomatic: 0
+  caliber: .308 WIN
   fireRate: 0.85
   bulletsPerShot: 1
   bulletSpread: 0
