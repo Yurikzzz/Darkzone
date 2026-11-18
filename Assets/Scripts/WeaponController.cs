@@ -27,6 +27,7 @@ public class WeaponController : MonoBehaviour
     private Camera mainCam;
     private PlayerMovement playerMovement;
     private PlayerMeleeAttack playerMelee;
+    private HandsAiming handsAiming;
     private ContactFilter2D rayFilter;
     private readonly List<RaycastHit2D> rayResults = new List<RaycastHit2D>();
     private readonly Dictionary<WeaponData, int> ammoPerWeapon = new Dictionary<WeaponData, int>();
@@ -48,6 +49,7 @@ public class WeaponController : MonoBehaviour
         mainCam = Camera.main;
         playerMovement = GetComponentInParent<PlayerMovement>();
         playerMelee = GetComponent<PlayerMeleeAttack>() ?? GetComponentInParent<PlayerMeleeAttack>();
+        handsAiming = GetComponent<HandsAiming>() ?? GetComponentInParent<HandsAiming>();
 
         rayFilter = new ContactFilter2D();
         rayFilter.useTriggers = false;
@@ -312,7 +314,8 @@ public class WeaponController : MonoBehaviour
     {
         Vector2 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);
         Vector2 origin = (Vector2)firePoint.position;
-        Vector2 dir = (mouseWorld - origin).normalized;
+        Vector2 toMouse = mouseWorld - origin;
+        Vector2 dir = toMouse.sqrMagnitude > 0.0001f ? toMouse.normalized : (Vector2)firePoint.right;
 
         for (int i = 0; i < weaponData.bulletsPerShot; i++)
         {
@@ -354,12 +357,44 @@ public class WeaponController : MonoBehaviour
             }
         }
 
+        SpawnMuzzleFlash(origin, dir);
+
+        if (weaponData.screenShakeIntensity > 0f && weaponData.screenShakeDuration > 0f)
+            CameraFollow.ShakeDirectional(-dir, weaponData.screenShakeIntensity, weaponData.screenShakeDuration);
+
         currentAmmo--;
         ammoPerWeapon[weaponData] = currentAmmo;
         NotifyAmmoChanged();
 
         if (currentAmmo <= 0)
             StartReload();
+    }
+
+    private void SpawnMuzzleFlash(Vector2 origin, Vector2 dir)
+    {
+        if (weaponData == null || !weaponData.enableMuzzleFlash) return;
+
+        string sortingLayer = gunSpriteRenderer != null ? gunSpriteRenderer.sortingLayerName : "Default";
+        int baseOrder = gunSpriteRenderer != null ? gunSpriteRenderer.sortingOrder - 1 : 10;
+
+        MuzzleFlashVFX.SpawnOptions options = new MuzzleFlashVFX.SpawnOptions
+        {
+            position = origin,
+            angleRad = Mathf.Atan2(dir.y, dir.x),
+            size = weaponData.muzzleFlashSize,
+            sparks = weaponData.muzzleFlashSparks,
+            smoke = weaponData.muzzleFlashSmoke,
+            casing = weaponData.muzzleFlashCasing,
+            seed = 0,
+            anchor = firePoint,
+            baseSortingOrder = baseOrder,
+            sortingLayerName = sortingLayer,
+            onKick = (handsAiming != null && weaponData.muzzleFlashKick > 0f)
+                ? kick => handsAiming.ApplyRecoilKick(kick * weaponData.muzzleFlashKick)
+                : (Action<Vector2>)null
+        };
+
+        MuzzleFlashVFX.Spawn(options);
     }
 
     private void StartReload()

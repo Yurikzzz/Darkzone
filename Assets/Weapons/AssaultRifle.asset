@@ -27,3 +27,11 @@ MonoBehaviour:
   bulletColor: {r: 1, g: 0.78, b: 0.25, a: 1}
   trailWidth: 0.32
   trailFadeTime: 0.16
+  enableMuzzleFlash: 1
+  muzzleFlashSize: 1
+  muzzleFlashSparks: -1
+  muzzleFlashSmoke: 1
+  muzzleFlashCasing: 1
+  muzzleFlashKick: 1
+  screenShakeIntensity: 0.05
+  screenShakeDuration: 0.09

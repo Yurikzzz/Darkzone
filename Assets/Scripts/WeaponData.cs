@@ -63,6 +63,37 @@ public class WeaponData : ScriptableObject
     [Range(0.01f, 1f)]
     public float trailFadeTime = 0.25f;
 
+    [Header("Muzzle Flash")]
+    [Tooltip("If true, plays the procedural pixel-art muzzle flash when firing this weapon.")]
+    public bool enableMuzzleFlash = true;
+
+    [Tooltip("Overall scale of the muzzle flash, glow, sparks, and smoke.")]
+    [Range(0.25f, 2.5f)]
+    public float muzzleFlashSize = 1f;
+
+    [Tooltip("Number of sparks spawned per shot (-1 = auto based on muzzle flash size).")]
+    [Min(-1)]
+    public int muzzleFlashSparks = -1;
+
+    [Tooltip("If true, spawns muzzle smoke puffs and rising wisps.")]
+    public bool muzzleFlashSmoke = true;
+
+    [Tooltip("If true, ejects a spinning brass shell casing.")]
+    public bool muzzleFlashCasing = true;
+
+    [Tooltip("Visual gun recoil kick multiplier applied to the player's hands on shot (0 = no kick).")]
+    [Range(0f, 3f)]
+    public float muzzleFlashKick = 1f;
+
+    [Header("Screen Shake")]
+    [Tooltip("Subtle camera shake intensity when firing this weapon (0 = no shake).")]
+    [Range(0f, 0.5f)]
+    public float screenShakeIntensity = 0.05f;
+
+    [Tooltip("Duration in seconds of the gunshot screen shake.")]
+    [Range(0.01f, 0.5f)]
+    public float screenShakeDuration = 0.09f;
+
     /// <summary>
     /// True when this object is an independent runtime instance cloned for an inventory item.
     /// </summary>

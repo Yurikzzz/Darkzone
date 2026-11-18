@@ -60,6 +60,14 @@ public class ConsumableData : ScriptableObject
     [Tooltip("Color of the explosion blast circle.")]
     public Color explosionColor = new Color(1f, 0.55f, 0.1f, 0.9f);
 
+    [Tooltip("Camera shake intensity at the center of the explosion.")]
+    [Range(0f, 1f)]
+    public float explosionShakeIntensity = 0.22f;
+
+    [Tooltip("Duration in seconds of the explosion camera shake.")]
+    [Range(0.05f, 1f)]
+    public float explosionShakeDuration = 0.3f;
+
     /// <summary>
     /// True when this object is an independent runtime instance cloned for an inventory item.
     /// </summary>

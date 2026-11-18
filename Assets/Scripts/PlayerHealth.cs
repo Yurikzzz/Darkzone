@@ -6,6 +6,15 @@ public class PlayerHealth : MonoBehaviour, IDamageable
     [Header("Stats")]
     [SerializeField] private float maxHealth = 100f;
 
+    [Header("Hit Feedback")]
+    [Tooltip("Camera shake intensity when the player takes damage.")]
+    [Range(0f, 0.5f)]
+    [SerializeField] private float hitShakeIntensity = 0.12f;
+
+    [Tooltip("Duration in seconds of the hit camera shake.")]
+    [Range(0.02f, 0.5f)]
+    [SerializeField] private float hitShakeDuration = 0.18f;
+
     private float currentHealth;
 
     public event Action<float, float> OnHealthChanged;
@@ -27,11 +36,17 @@ public class PlayerHealth : MonoBehaviour, IDamageable
 
     public void TakeDamage(float damage)
     {
-        if (!IsAlive) return;
+        if (!IsAlive || damage <= 0f) return;
 
         currentHealth -= damage;
         currentHealth = Mathf.Max(0f, currentHealth);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
+
+        if (hitShakeIntensity > 0f && hitShakeDuration > 0f)
+        {
+            float scale = Mathf.Clamp(damage / 20f, 0.75f, 1.5f);
+            CameraFollow.Shake(hitShakeIntensity * scale, hitShakeDuration);
+        }
 
         if (currentHealth <= 0f)
             Die();

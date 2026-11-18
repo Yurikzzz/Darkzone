@@ -13,10 +13,18 @@ public class HandsAiming : MonoBehaviour
     [Tooltip("Vertical offset of the orbit center relative to the player (in local space).")]
     [SerializeField] private float orbitVerticalOffset = 0f;
 
+    [Header("Recoil Kick")]
+    [Tooltip("How fast the hands spring back after a gunshot recoil kick.")]
+    [SerializeField] private float recoilRecoverySpeed = 22f;
+
+    [Tooltip("Maximum local-space recoil offset distance.")]
+    [SerializeField] private float maxRecoilOffset = 0.22f;
+
     private Camera mainCam;
     private Vector3 initialScale;
     private PlayerHealth playerHealth;
     private PlayerMovement playerMovement;
+    private Vector2 recoilOffset;
 
     private void Awake()
     {
@@ -59,14 +67,29 @@ public class HandsAiming : MonoBehaviour
     public void ResetHands()
     {
         enabled = true;
+        recoilOffset = Vector2.zero;
         if (handsTransform != null)
             handsTransform.gameObject.SetActive(true);
+    }
+
+    /// <summary>
+    /// Applies a brief visual recoil kick to the hands in world space.
+    /// </summary>
+    public void ApplyRecoilKick(Vector2 worldKick)
+    {
+        Vector2 localKick = transform.InverseTransformVector(worldKick);
+        recoilOffset = Vector2.ClampMagnitude(recoilOffset + localKick, maxRecoilOffset);
     }
 
     private void Update()
     {
         if (handsTransform == null || mainCam == null) return;
         if (playerMovement != null && !playerMovement.CanMove) return;
+
+        if (recoilOffset.sqrMagnitude > 0.000001f)
+            recoilOffset = Vector2.Lerp(recoilOffset, Vector2.zero, 1f - Mathf.Exp(-recoilRecoverySpeed * Time.deltaTime));
+        else
+            recoilOffset = Vector2.zero;
 
         // Get cursor world position
         Vector3 mouseWorld = mainCam.ScreenToWorldPoint(Input.mousePosition);
@@ -88,8 +111,8 @@ public class HandsAiming : MonoBehaviour
         // ---- Position the hands pivot on an orbit around the player (local space) ----
         // This keeps the orbit radius independent of the parent's scale.
         Vector2 dir = toMouse.normalized;
-        float localX = dir.x * orbitRadius + orbitVerticalOffset * 0f; // horizontal orbit
-        float localY = dir.y * orbitRadius + orbitVerticalOffset;
+        float localX = dir.x * orbitRadius + orbitVerticalOffset * 0f + recoilOffset.x; // horizontal orbit
+        float localY = dir.y * orbitRadius + orbitVerticalOffset + recoilOffset.y;
         handsTransform.localPosition = new Vector3(localX, localY, 0f);
 
         // ---- Rotate the hands group to aim at the cursor ----

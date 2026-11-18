@@ -27,3 +27,5 @@ MonoBehaviour:
   fuseTime: 1.5
   explosionKnockback: 6
   explosionColor: {r: 1, g: 0.5, b: 0.1, a: 0.9}
+  explosionShakeIntensity: 0.22
+  explosionShakeDuration: 0.3

@@ -152,7 +152,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cfb83d2a37bd6aa44a66b1efc1711bed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 300
+  maxHealth: 150
 --- !u!114 &8227434847620357388
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -224,7 +224,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 09db3ff5128fab543886f3dfe41cca8d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dropChance: 0.5
+  dropChance: 0.25
   dropPool:
   - {fileID: 11400000, guid: 9dbec8b62f1e73f4795d123cfb316983, type: 2}
   - {fileID: 11400000, guid: 8b4dfe0417916b545a811855954f2d70, type: 2}

@@ -143,6 +143,24 @@ public class ThrownGrenade : MonoBehaviour
         // 2. Spawn explosion visual effect
         SpawnExplosionVisual(transform.position, radius, blastColor);
 
+        // 3. Trigger distance-attenuated explosion screen shake
+        float baseShake = data != null ? data.explosionShakeIntensity : 0.22f;
+        float shakeDuration = data != null ? data.explosionShakeDuration : 0.3f;
+        if (baseShake > 0f && shakeDuration > 0f)
+        {
+            float falloff = 1f;
+            Transform listener = CameraFollow.Instance != null && CameraFollow.Instance.target != null
+                ? CameraFollow.Instance.target
+                : (Camera.main != null ? Camera.main.transform : null);
+            if (listener != null)
+            {
+                float dist = Vector2.Distance(transform.position, listener.position);
+                float maxRange = Mathf.Max(radius * 4f, 10f);
+                falloff = Mathf.Lerp(1f, 0.25f, Mathf.Clamp01(dist / maxRange));
+            }
+            CameraFollow.Shake(baseShake * falloff, shakeDuration);
+        }
+
         Destroy(gameObject);
     }
 
