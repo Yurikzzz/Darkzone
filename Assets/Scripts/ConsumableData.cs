@@ -93,9 +93,9 @@ public class ConsumableData : ScriptableObject
         switch (type)
         {
             case ConsumableType.Healing:
-                return $"<color=#44FF77>HEAL +{healAmount:0} HP</color>";
+                return $"<color=#A1A1AA>HEAL +{healAmount:0} HP</color>";
             case ConsumableType.Grenade:
-                return $"<color=#FFAA33>DMG {grenadeDamage:0}</color>  <color=#66CCFF>RAD {explosionRadius:0.1}m</color>  <color=#FF5555>FUSE {fuseTime:0.1}s</color>";
+                return $"<color=#A1A1AA>DMG {grenadeDamage:0}</color>  <color=#52525B>•</color>  <color=#A1A1AA>RAD {explosionRadius:0.1}m</color>  <color=#52525B>•</color>  <color=#71717A>FUSE {fuseTime:0.1}s</color>";
             default:
                 return "";
         }

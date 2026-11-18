@@ -46,9 +46,15 @@ public class PlayerInventory : MonoBehaviour
     [Tooltip("List of all consumables owned by the player (coming soon).")]
     [SerializeField] private List<ScriptableObject> ownedConsumables = new List<ScriptableObject>();
 
+    [Header("Currency")]
+    [Tooltip("Coins collected by the player.")]
+    [Min(0)]
+    [SerializeField] private int coins = 0;
+
     private WeaponController weaponController;
 
     public event Action OnInventoryChanged;
+    public event Action<int> OnCoinsChanged;
 
     public WeaponData PrimaryWeapon => primaryWeapon;
     public WeaponData SecondaryWeapon => secondaryWeapon;
@@ -59,6 +65,7 @@ public class PlayerInventory : MonoBehaviour
     public IReadOnlyList<WeaponData> OwnedWeapons => ownedWeapons;
     public IReadOnlyList<ScriptableObject> OwnedEquipment => ownedEquipment;
     public IReadOnlyList<ScriptableObject> OwnedConsumables => ownedConsumables;
+    public int Coins => coins;
 
     private void Awake()
     {
@@ -628,6 +635,115 @@ public class PlayerInventory : MonoBehaviour
         ownedConsumables.Remove(item);
         equippedConsumables[slotIndex] = null;
 
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    // ── Item Removal API ────────────────────────────────────────────────
+
+    /// <summary>
+    /// Permanently removes an item of any supported type (weapon, equipment, or consumable)
+    /// from the player's stash, clearing any equipped slot that holds it.
+    /// </summary>
+    public bool RemoveItem(ScriptableObject item)
+    {
+        if (item == null) return false;
+        if (item is WeaponData weapon) return RemoveWeapon(weapon);
+        if (item is ConsumableData consumable) return RemoveConsumable(consumable);
+        return RemoveEquipment(item);
+    }
+
+    /// <summary>
+    /// Removes a weapon from ownedWeapons and unequips it if currently equipped.
+    /// </summary>
+    public bool RemoveWeapon(WeaponData weapon)
+    {
+        if (weapon == null || !ownedWeapons.Contains(weapon))
+            return false;
+
+        bool equippedChanged = false;
+        if (primaryWeapon == weapon)
+        {
+            primaryWeapon = secondaryWeapon;
+            secondaryWeapon = null;
+            equippedChanged = true;
+        }
+        else if (secondaryWeapon == weapon)
+        {
+            secondaryWeapon = null;
+            equippedChanged = true;
+        }
+
+        ownedWeapons.Remove(weapon);
+
+        if (equippedChanged)
+            SyncWithWeaponController();
+
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>
+    /// Removes an equipment item from ownedEquipment and clears its slot if equipped.
+    /// </summary>
+    public bool RemoveEquipment(ScriptableObject equipment)
+    {
+        if (equipment == null || !ownedEquipment.Contains(equipment))
+            return false;
+
+        if (equippedVest == equipment)
+            equippedVest = null;
+        if (equippedMask == equipment)
+            equippedMask = null;
+
+        ownedEquipment.Remove(equipment);
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>
+    /// Removes a consumable from ownedConsumables and clears any quick-slot holding it.
+    /// </summary>
+    public bool RemoveConsumable(ConsumableData consumable)
+    {
+        if (consumable == null || !ownedConsumables.Contains(consumable))
+            return false;
+
+        if (equippedConsumables != null)
+        {
+            for (int i = 0; i < equippedConsumables.Count; i++)
+            {
+                if (equippedConsumables[i] == consumable)
+                    equippedConsumables[i] = null;
+            }
+        }
+
+        ownedConsumables.Remove(consumable);
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>
+    /// Grants coins to the player and notifies listeners.
+    /// </summary>
+    public void AddCoins(int amount)
+    {
+        if (amount <= 0) return;
+
+        coins += amount;
+        OnCoinsChanged?.Invoke(coins);
+        OnInventoryChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Attempts to spend the specified number of coins. Returns true if the player had enough.
+    /// </summary>
+    public bool SpendCoins(int amount)
+    {
+        if (amount <= 0 || coins < amount) return false;
+
+        coins -= amount;
+        OnCoinsChanged?.Invoke(coins);
         OnInventoryChanged?.Invoke();
         return true;
     }

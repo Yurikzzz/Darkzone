@@ -5,7 +5,7 @@ using TMPro;
 
 /// <summary>
 /// Represents a single equipped loadout slot (Primary, Secondary, Vest, Mask, or Consumable 1-4).
-/// Supports drag-and-drop equipping, dragging out to swap/unequip, and clicking X to unequip.
+/// Styled for the minimal black tactical theme and supports click/drag equipping and unequipping.
 /// </summary>
 public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -22,23 +22,47 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
     [SerializeField] private SlotKind slotKind = SlotKind.WeaponPrimary;
     [SerializeField] private int slotIndex = 0;
 
-    [Header("UI References")]
+    [Header("Card References")]
     [SerializeField] private Image borderImage;
     [SerializeField] private Image innerImage;
+    [SerializeField] private GameObject activeAccentBar;
+    [SerializeField] private Image activeAccentBarImage;
+    [SerializeField] private Image thumbBoxBorderImage;
     [SerializeField] private Image thumbBoxImage;
     [SerializeField] private Image iconImage;
+    [SerializeField] private Image emptyPlaceholderIcon;
+    [SerializeField] private TextMeshProUGUI emptyKeybindText;
     [SerializeField] private TextMeshProUGUI headerText;
+    [SerializeField] private Image statusBadgeBorder;
+    [SerializeField] private Image statusBadgeBg;
+    [SerializeField] private Image statusBadgeDot;
+    [SerializeField] private TextMeshProUGUI statusBadgeText;
     [SerializeField] private TextMeshProUGUI nameText;
+    [SerializeField] private GameObject bottomRow;
     [SerializeField] private TextMeshProUGUI statsText;
+    [SerializeField] private bool showStatsRow = true;
     [SerializeField] private Button unequipButton;
     [SerializeField] private CanvasGroup canvasGroup;
 
-    [Header("Tactical Palette")]
-    [SerializeField] private Color defaultBorderColor = new Color(0.22f, 0.27f, 0.23f, 1f);
-    [SerializeField] private Color activeAccentColor = new Color(0.90f, 0.66f, 0.18f, 1f);
-    [SerializeField] private Color highlightValidColor = new Color(0.32f, 0.82f, 0.44f, 1f);
-    [SerializeField] private Color defaultInnerColor = new Color(0.11f, 0.13f, 0.12f, 1f);
-    [SerializeField] private Color highlightInnerColor = new Color(0.14f, 0.24f, 0.17f, 1f);
+    [Header("Minimal Black Palette")]
+    [SerializeField] private Color emptyBorderColor = new Color(0.094f, 0.094f, 0.114f, 1f);          // #18181D
+    [SerializeField] private Color occupiedWeaponBorderColor = new Color(0.247f, 0.247f, 0.275f, 1f); // #3F3F46
+    [SerializeField] private Color occupiedGearBorderColor = new Color(0.153f, 0.153f, 0.180f, 1f);   // #27272E
+    [SerializeField] private Color emptyInnerColor = new Color(0.031f, 0.031f, 0.039f, 1f);           // #08080A
+    [SerializeField] private Color occupiedInnerColor = new Color(0.067f, 0.067f, 0.078f, 1f);        // #111114
+    [SerializeField] private Color thumbEmptyBorderColor = new Color(0.094f, 0.094f, 0.114f, 1f);     // #18181D
+    [SerializeField] private Color thumbOccupiedBorderColor = new Color(0.153f, 0.153f, 0.180f, 1f);  // #27272E
+    [SerializeField] private Color activeStatusColor = new Color(0.290f, 0.871f, 0.502f, 1f);         // #4ADE80
+    [SerializeField] private Color activeBadgeBgColor = new Color(0.031f, 0.090f, 0.055f, 1f);        // #08170E
+    [SerializeField] private Color activeBadgeBorderColor = new Color(0.086f, 0.396f, 0.204f, 1f);    // #166534
+    [SerializeField] private Color inactiveBadgeBgColor = new Color(0.024f, 0.024f, 0.027f, 1f);      // #060607
+    [SerializeField] private Color inactiveBadgeBorderColor = new Color(0.094f, 0.094f, 0.114f, 1f);  // #18181D
+    [SerializeField] private Color inactiveDotColor = new Color(0.322f, 0.322f, 0.357f, 1f);          // #52525B
+    [SerializeField] private Color primaryTextColor = new Color(0.957f, 0.957f, 0.961f, 1f);          // #F4F4F5
+    [SerializeField] private Color secondaryTextColor = new Color(0.631f, 0.631f, 0.667f, 1f);        // #A1A1AA
+    [SerializeField] private Color mutedTextColor = new Color(0.443f, 0.443f, 0.478f, 1f);            // #71717A
+    [SerializeField] private Color highlightValidBorderColor = new Color(0.290f, 0.871f, 0.502f, 1f); // #4ADE80
+    [SerializeField] private Color highlightValidInnerColor = new Color(0.031f, 0.090f, 0.055f, 1f);  // #08170E
 
     [Header("Controllers")]
     [SerializeField] private InventoryDragController dragController;
@@ -58,6 +82,8 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
 
         if (iconImage != null)
             iconImage.raycastTarget = false;
+        if (emptyPlaceholderIcon != null)
+            emptyPlaceholderIcon.raycastTarget = false;
 
         if (unequipButton != null)
         {
@@ -71,6 +97,8 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
         currentItem = item;
         canUnequipCurrent = canUnequip;
 
+        bool occupied = item != null;
+
         if (item is WeaponData weapon)
         {
             if (iconImage != null)
@@ -82,11 +110,14 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             if (nameText != null)
             {
                 nameText.text = weapon.weaponName;
-                nameText.color = Color.white;
+                nameText.color = primaryTextColor;
             }
             if (statsText != null)
             {
-                statsText.text = $"<color=#FFB84D>DMG {weapon.damage:0}</color>  <color=#66CCFF>MAG {weapon.magazineSize}</color>  <color=#88FFAA>{(weapon.isAutomatic ? "AUTO" : "SEMI")}</color>";
+                statsText.text =
+                    $"<color=#A1A1AA>DMG {weapon.damage:0}</color>  <color=#52525B>•</color>  " +
+                    $"<color=#A1A1AA>MAG {weapon.magazineSize}</color>  <color=#52525B>•</color>  " +
+                    $"<color=#71717A>{(weapon.isAutomatic ? "AUTO" : "SEMI")}</color>";
             }
         }
         else if (item is ConsumableData consumable)
@@ -100,7 +131,7 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             if (nameText != null)
             {
                 nameText.text = consumable.consumableName;
-                nameText.color = consumable.tintColor;
+                nameText.color = primaryTextColor;
             }
             if (statsText != null)
             {
@@ -112,17 +143,17 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             if (iconImage != null)
             {
                 iconImage.sprite = null;
-                iconImage.color = new Color(0.45f, 0.75f, 0.50f, 1f);
+                iconImage.color = activeStatusColor;
                 iconImage.enabled = true;
             }
             if (nameText != null)
             {
                 nameText.text = item.name;
-                nameText.color = Color.white;
+                nameText.color = primaryTextColor;
             }
             if (statsText != null)
             {
-                statsText.text = "Equipped gear";
+                statsText.text = "<color=#A1A1AA>Equipped gear</color>";
             }
         }
         else
@@ -135,22 +166,67 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             if (nameText != null)
             {
                 nameText.text = "EMPTY";
-                nameText.color = new Color(0.50f, 0.55f, 0.51f, 1f);
+                nameText.color = mutedTextColor;
             }
             if (statsText != null)
             {
-                statsText.text = GetEmptyHint();
+                statsText.text = $"<color=#52525B>{GetEmptyHint()}</color>";
             }
         }
 
+        if (emptyPlaceholderIcon != null)
+            emptyPlaceholderIcon.enabled = !occupied && emptyPlaceholderIcon.sprite != null;
+
+        if (emptyKeybindText != null)
+            emptyKeybindText.gameObject.SetActive(!occupied);
+
+        if (activeAccentBar != null)
+            activeAccentBar.SetActive(occupied);
+        if (activeAccentBarImage != null)
+            activeAccentBarImage.color = activeStatusColor;
+
+        if (headerText != null)
+            headerText.color = occupied ? secondaryTextColor : mutedTextColor;
+
+        UpdateStatusBadge(occupied);
+        ApplyRestingCardColors(occupied);
+
+        bool showUnequip = occupied && canUnequip;
+        if (unequipButton != null)
+            unequipButton.gameObject.SetActive(showUnequip);
+
+        if (bottomRow != null)
+            bottomRow.SetActive(showStatsRow || showUnequip);
+    }
+
+    private void UpdateStatusBadge(bool occupied)
+    {
+        if (statusBadgeText != null)
+        {
+            statusBadgeText.text = occupied ? "ACTIVE" : "INACTIVE";
+            statusBadgeText.color = occupied ? activeStatusColor : mutedTextColor;
+        }
+        if (statusBadgeDot != null)
+            statusBadgeDot.color = occupied ? activeStatusColor : inactiveDotColor;
+        if (statusBadgeBg != null)
+            statusBadgeBg.color = occupied ? activeBadgeBgColor : inactiveBadgeBgColor;
+        if (statusBadgeBorder != null)
+            statusBadgeBorder.color = occupied ? activeBadgeBorderColor : inactiveBadgeBorderColor;
+    }
+
+    private void ApplyRestingCardColors(bool occupied)
+    {
+        bool isWeaponSlot = slotKind == SlotKind.WeaponPrimary || slotKind == SlotKind.WeaponSecondary;
         if (borderImage != null)
-            borderImage.color = item != null ? activeAccentColor : defaultBorderColor;
+            borderImage.color = occupied
+                ? (isWeaponSlot ? occupiedWeaponBorderColor : occupiedGearBorderColor)
+                : emptyBorderColor;
 
         if (innerImage != null)
-            innerImage.color = defaultInnerColor;
+            innerImage.color = occupied ? occupiedInnerColor : emptyInnerColor;
 
-        if (unequipButton != null)
-            unequipButton.gameObject.SetActive(item != null && canUnequip);
+        if (thumbBoxBorderImage != null)
+            thumbBoxBorderImage.color = occupied ? thumbOccupiedBorderColor : thumbEmptyBorderColor;
     }
 
     private string GetEmptyHint()
@@ -197,10 +273,7 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
         {
             if (canvasGroup != null && !isDraggingThisSlot)
                 canvasGroup.alpha = 1f;
-            if (borderImage != null)
-                borderImage.color = currentItem != null ? activeAccentColor : defaultBorderColor;
-            if (innerImage != null)
-                innerImage.color = defaultInnerColor;
+            ApplyRestingCardColors(currentItem != null);
             return;
         }
 
@@ -209,18 +282,18 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             if (canvasGroup != null && !isDraggingThisSlot)
                 canvasGroup.alpha = 1f;
             if (borderImage != null)
-                borderImage.color = highlightValidColor;
+                borderImage.color = highlightValidBorderColor;
             if (innerImage != null)
-                innerImage.color = highlightInnerColor;
+                innerImage.color = highlightValidInnerColor;
         }
         else
         {
             if (canvasGroup != null && !isDraggingThisSlot)
-                canvasGroup.alpha = 0.55f;
+                canvasGroup.alpha = 0.45f;
             if (borderImage != null)
-                borderImage.color = defaultBorderColor;
+                borderImage.color = emptyBorderColor;
             if (innerImage != null)
-                innerImage.color = defaultInnerColor;
+                innerImage.color = emptyInnerColor;
         }
     }
 
@@ -303,8 +376,6 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        // Reserved for future slot inspection or double-click behaviors;
-        // explicit unequip uses the [X] button or dragging out to the inventory panel.
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -316,7 +387,7 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
         if (canvasGroup != null)
         {
             canvasGroup.blocksRaycasts = false;
-            canvasGroup.alpha = 0.45f;
+            canvasGroup.alpha = 0.4f;
         }
 
         Sprite icon = iconImage != null ? iconImage.sprite : null;
@@ -357,4 +428,3 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             dragController.EndDrag(eventData);
     }
 }
-

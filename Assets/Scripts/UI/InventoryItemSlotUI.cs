@@ -5,32 +5,37 @@ using TMPro;
 
 /// <summary>
 /// Represents an individual item card in the right-side Inventory stash list.
-/// Supports both click-to-equip and drag-and-drop onto compatible LoadoutSlotUI targets.
+/// Supports click-to-equip, drag-and-drop onto compatible LoadoutSlotUI targets,
+/// unequipping via UNEQUIP, and permanent removal via the trash button.
 /// </summary>
 public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("UI References")]
     [SerializeField] private Image borderImage;
     [SerializeField] private Image innerImage;
+    [SerializeField] private Image thumbBoxBorderImage;
     [SerializeField] private Image thumbBoxImage;
     [SerializeField] private Image iconImage;
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI statsText;
+
+    [Header("Item Actions")]
     [SerializeField] private GameObject equippedBadge;
+    [SerializeField] private Image equippedBadgeBorder;
     [SerializeField] private Image equippedBadgeBg;
+    [SerializeField] private Image equippedBadgeDot;
     [SerializeField] private TextMeshProUGUI equippedBadgeText;
-    [SerializeField] private Button actionButton;
-    [SerializeField] private Image actionButtonImage;
-    [SerializeField] private TextMeshProUGUI actionButtonText;
+    [SerializeField] private Button unequipButton;
+    [SerializeField] private Button trashButton;
     [SerializeField] private CanvasGroup canvasGroup;
 
-    [Header("Tactical Palette")]
-    [SerializeField] private Color defaultBorderColor = new Color(0.22f, 0.27f, 0.23f, 1f);
-    [SerializeField] private Color primaryColor = new Color(0.90f, 0.66f, 0.18f, 1f);
-    [SerializeField] private Color secondaryColor = new Color(0.29f, 0.56f, 0.78f, 1f);
-    [SerializeField] private Color equipmentColor = new Color(0.28f, 0.72f, 0.41f, 1f);
-    [SerializeField] private Color equipButtonColor = new Color(0.24f, 0.29f, 0.25f, 1f);
-    [SerializeField] private Color unequipButtonColor = new Color(0.65f, 0.22f, 0.22f, 1f);
+    [Header("Minimal Black Palette")]
+    [SerializeField] private Color defaultBorderColor = new Color(0.153f, 0.153f, 0.180f, 1f);     // #27272E
+    [SerializeField] private Color equippedBorderColor = new Color(0.247f, 0.247f, 0.275f, 1f);    // #3F3F46
+    [SerializeField] private Color cardFillColor = new Color(0.067f, 0.067f, 0.078f, 1f);          // #111114
+    [SerializeField] private Color activeStatusColor = new Color(0.290f, 0.871f, 0.502f, 1f);      // #4ADE80
+    [SerializeField] private Color activeBadgeBgColor = new Color(0.031f, 0.090f, 0.055f, 1f);     // #08170E
+    [SerializeField] private Color activeBadgeBorderColor = new Color(0.086f, 0.396f, 0.204f, 1f); // #166534
 
     private ScriptableObject itemData;
     private PlayerInventory inventory;
@@ -47,10 +52,16 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
         if (iconImage != null)
             iconImage.raycastTarget = false;
 
-        if (actionButton != null)
+        if (unequipButton != null)
         {
-            actionButton.onClick.RemoveAllListeners();
-            actionButton.onClick.AddListener(HandleActionButtonClick);
+            unequipButton.onClick.RemoveAllListeners();
+            unequipButton.onClick.AddListener(HandleUnequipClick);
+        }
+
+        if (trashButton != null)
+        {
+            trashButton.onClick.RemoveAllListeners();
+            trashButton.onClick.AddListener(HandleTrashClick);
         }
     }
 
@@ -65,7 +76,6 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
 
         isEquipped = false;
         canUnequip = false;
-        Color accentColor = defaultBorderColor;
         string badgeLabel = "";
 
         if (item is WeaponData weapon)
@@ -73,8 +83,7 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
             isEquipped = inv.IsWeaponEquipped(weapon, out int weaponSlot);
             if (isEquipped)
             {
-                accentColor = weaponSlot == 0 ? primaryColor : secondaryColor;
-                badgeLabel = weaponSlot == 0 ? "SLOT 1" : "SLOT 2";
+                badgeLabel = weaponSlot == 0 ? "SLOT 1 · ACTIVE" : "SLOT 2 · ACTIVE";
                 canUnequip = weaponSlot == 1 || inv.SecondaryWeapon != null;
             }
 
@@ -87,15 +96,19 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
             if (titleText != null)
                 titleText.text = weapon.weaponName;
             if (statsText != null)
-                statsText.text = $"<color=#FFB84D>DMG {weapon.damage:0}</color>  <color=#66CCFF>MAG {weapon.magazineSize}</color>  <color=#88FFAA>{(weapon.isAutomatic ? "AUTO" : "SEMI")}</color>";
+            {
+                statsText.text =
+                    $"<color=#A1A1AA>DMG {weapon.damage:0}</color>  <color=#52525B>•</color>  " +
+                    $"<color=#A1A1AA>MAG {weapon.magazineSize}</color>  <color=#52525B>•</color>  " +
+                    $"<color=#71717A>{(weapon.isAutomatic ? "AUTO" : "SEMI")}</color>";
+            }
         }
         else if (item is ConsumableData consumable)
         {
             isEquipped = inv.IsConsumableEquipped(consumable, out int consumableSlot);
             if (isEquipped)
             {
-                accentColor = primaryColor;
-                badgeLabel = $"SLOT {consumableSlot + 1}";
+                badgeLabel = $"SLOT {consumableSlot + 1} · ACTIVE";
                 canUnequip = true;
             }
 
@@ -115,55 +128,48 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
             isEquipped = inv.IsEquipmentEquipped(item, out EquipmentSlotType eqSlot);
             if (isEquipped)
             {
-                accentColor = equipmentColor;
-                badgeLabel = eqSlot == EquipmentSlotType.Vest ? "VEST" : "MASK";
+                badgeLabel = eqSlot == EquipmentSlotType.Vest ? "VEST · ACTIVE" : "MASK · ACTIVE";
                 canUnequip = true;
             }
 
             if (iconImage != null)
             {
                 iconImage.sprite = null;
-                iconImage.color = equipmentColor;
+                iconImage.color = activeStatusColor;
                 iconImage.enabled = true;
             }
             if (titleText != null)
                 titleText.text = item.name;
             if (statsText != null)
-                statsText.text = "Equipment gear";
+                statsText.text = "<color=#A1A1AA>Equipment gear</color>";
         }
 
         if (borderImage != null)
-            borderImage.color = isEquipped ? accentColor : defaultBorderColor;
+            borderImage.color = isEquipped ? equippedBorderColor : defaultBorderColor;
+
+        if (innerImage != null)
+            innerImage.color = cardFillColor;
 
         if (equippedBadge != null)
             equippedBadge.SetActive(isEquipped);
-        if (isEquipped && equippedBadgeBg != null)
-            equippedBadgeBg.color = new Color(accentColor.r, accentColor.g, accentColor.b, 0.25f);
-        if (isEquipped && equippedBadgeText != null)
+
+        if (isEquipped)
         {
-            equippedBadgeText.text = badgeLabel;
-            equippedBadgeText.color = accentColor;
+            if (equippedBadgeBorder != null) equippedBadgeBorder.color = activeBadgeBorderColor;
+            if (equippedBadgeBg != null) equippedBadgeBg.color = activeBadgeBgColor;
+            if (equippedBadgeDot != null) equippedBadgeDot.color = activeStatusColor;
+            if (equippedBadgeText != null)
+            {
+                equippedBadgeText.text = badgeLabel;
+                equippedBadgeText.color = activeStatusColor;
+            }
         }
 
-        if (actionButton != null)
-        {
-            if (!isEquipped)
-            {
-                actionButton.gameObject.SetActive(true);
-                if (actionButtonImage != null) actionButtonImage.color = equipButtonColor;
-                if (actionButtonText != null) actionButtonText.text = "EQUIP";
-            }
-            else if (canUnequip)
-            {
-                actionButton.gameObject.SetActive(true);
-                if (actionButtonImage != null) actionButtonImage.color = unequipButtonColor;
-                if (actionButtonText != null) actionButtonText.text = "X";
-            }
-            else
-            {
-                actionButton.gameObject.SetActive(false);
-            }
-        }
+        if (unequipButton != null)
+            unequipButton.gameObject.SetActive(isEquipped && canUnequip);
+
+        if (trashButton != null)
+            trashButton.gameObject.SetActive(true);
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -171,10 +177,14 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
         if (eventData.dragging || eventData.button != PointerEventData.InputButton.Left)
             return;
 
-        if (actionButton != null && eventData.pointerPress != null &&
-            eventData.pointerPress.transform.IsChildOf(actionButton.transform))
+        if (eventData.pointerPress != null)
         {
-            return;
+            Transform pressTransform = eventData.pointerPress.transform;
+            if ((unequipButton != null && pressTransform.IsChildOf(unequipButton.transform)) ||
+                (trashButton != null && pressTransform.IsChildOf(trashButton.transform)))
+            {
+                return;
+            }
         }
 
         if (!isEquipped)
@@ -183,16 +193,17 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
         }
     }
 
-    private void HandleActionButtonClick()
+    private void HandleUnequipClick()
     {
-        if (isEquipped)
-        {
-            UnequipCurrent();
-        }
-        else
-        {
-            AutoEquip();
-        }
+        UnequipCurrent();
+    }
+
+    private void HandleTrashClick()
+    {
+        if (itemData == null || inventory == null)
+            return;
+
+        inventory.RemoveItem(itemData);
     }
 
     private void AutoEquip()
@@ -260,7 +271,7 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
         if (canvasGroup != null)
         {
             canvasGroup.blocksRaycasts = false;
-            canvasGroup.alpha = 0.45f;
+            canvasGroup.alpha = 0.4f;
         }
 
         Sprite icon = iconImage != null ? iconImage.sprite : null;
@@ -301,4 +312,3 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
             dragController.EndDrag(eventData);
     }
 }
-

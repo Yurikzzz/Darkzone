@@ -50,6 +50,11 @@ public class AmmoUI : MonoBehaviour
         {
             UpdateAmmoDisplay(weaponController.CurrentAmmo, weapon.magazineSize);
         }
+        else if (ammoText != null)
+        {
+            isReloading = false;
+            ammoText.text = "No Weapon\n0/0";
+        }
     }
 
     private void UpdateAmmoDisplay(int current, int max)

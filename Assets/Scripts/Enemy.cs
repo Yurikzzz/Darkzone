@@ -49,6 +49,19 @@ public class Enemy : MonoBehaviour, IDamageable
     protected virtual void Die()
     {
         OnDeath?.Invoke();
+
+        if (GetComponent<EnemyLootDropper>() == null)
+        {
+            int count = UnityEngine.Random.Range(1, 3);
+            float baseAngle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+            for (int i = 0; i < count; i++)
+            {
+                float angle = baseAngle + i * (Mathf.PI * 2f / count) + UnityEngine.Random.Range(-0.3f, 0.3f);
+                Vector2 dir = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+                CoinPickup.Spawn(transform.position, 1, dir * UnityEngine.Random.Range(1.8f, 2.8f));
+            }
+        }
+
         Destroy(gameObject);
     }
 }

@@ -14,9 +14,15 @@ public class InventoryDragController : MonoBehaviour
     [SerializeField] private RectTransform dragLayer;
     [SerializeField] private RectTransform dragGhost;
     [SerializeField] private Image dragGhostBorder;
+    [SerializeField] private Image dragGhostInner;
     [SerializeField] private Image dragGhostIcon;
     [SerializeField] private TextMeshProUGUI dragGhostLabel;
     [SerializeField] private LoadoutUI loadoutUI;
+
+    [Header("Minimal Black Theme")]
+    [SerializeField] private Color ghostBorderColor = new Color(0.290f, 0.871f, 0.502f, 1f);      // #4ADE80
+    [SerializeField] private Color ghostInnerColor = new Color(0.067f, 0.067f, 0.078f, 0.96f);    // #111114 @ 96%
+    [SerializeField] private Color ghostLabelColor = new Color(0.957f, 0.957f, 0.961f, 1f);       // #F4F4F5
 
     [Header("Snap-Back Animation")]
     [SerializeField] private float snapBackDuration = 0.12f;
@@ -83,6 +89,11 @@ public class InventoryDragController : MonoBehaviour
         SourceLoadoutSlot = sourceSlot;
         DropHandled = false;
 
+        if (dragGhostBorder != null)
+            dragGhostBorder.color = ghostBorderColor;
+        if (dragGhostInner != null)
+            dragGhostInner.color = ghostInnerColor;
+
         if (dragGhostIcon != null)
         {
             dragGhostIcon.sprite = icon;
@@ -91,7 +102,10 @@ public class InventoryDragController : MonoBehaviour
         }
 
         if (dragGhostLabel != null)
+        {
             dragGhostLabel.text = label;
+            dragGhostLabel.color = ghostLabelColor;
+        }
 
         dragLayer.SetAsLastSibling();
         dragGhost.gameObject.SetActive(true);

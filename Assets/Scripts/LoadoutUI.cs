@@ -35,8 +35,10 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
     [Header("Right Panel - Inventory Tabs & Scroll List")]
     [SerializeField] private RectTransform inventoryDropArea;
     [SerializeField] private Button[] tabButtons = new Button[3];
+    [SerializeField] private Image[] tabBorders = new Image[3];
     [SerializeField] private Image[] tabImages = new Image[3];
     [SerializeField] private TextMeshProUGUI[] tabTexts = new TextMeshProUGUI[3];
+    [SerializeField] private TextMeshProUGUI[] tabCountTexts = new TextMeshProUGUI[3];
     [SerializeField] private ScrollRect inventoryScrollRect;
     [SerializeField] private RectTransform inventoryContentRoot;
     [SerializeField] private GameObject emptyNoticeObj;
@@ -46,11 +48,17 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
     [Header("Drag Controller")]
     [SerializeField] private InventoryDragController dragController;
 
-    [Header("Tactical Tab Palette")]
-    [SerializeField] private Color activeTabColor = new Color(0.90f, 0.66f, 0.18f, 1f);
-    [SerializeField] private Color inactiveTabColor = new Color(0.16f, 0.19f, 0.17f, 1f);
-    [SerializeField] private Color activeTabTextColor = new Color(0.08f, 0.09f, 0.08f, 1f);
-    [SerializeField] private Color inactiveTabTextColor = new Color(0.58f, 0.63f, 0.59f, 1f);
+    [Header("Minimal Black Tab Palette")]
+    [SerializeField] private Color activeTabBorderColor = new Color(0.153f, 0.153f, 0.180f, 1f);  // #27272E
+    [SerializeField] private Color inactiveTabBorderColor = new Color(0.043f, 0.043f, 0.051f, 1f);// #0B0B0D
+    [SerializeField] private Color activeTabColor = new Color(0.067f, 0.067f, 0.078f, 1f);        // #111114
+    [SerializeField] private Color inactiveTabColor = new Color(0.043f, 0.043f, 0.051f, 1f);      // #0B0B0D
+    [SerializeField] private Color activeTabTextColor = new Color(0.957f, 0.957f, 0.961f, 1f);    // #F4F4F5
+    [SerializeField] private Color inactiveTabTextColor = new Color(0.443f, 0.443f, 0.478f, 1f);  // #71717A
+    [SerializeField] private Color activeTabCountColor = new Color(0.290f, 0.871f, 0.502f, 1f);   // #4ADE80
+    [SerializeField] private Color inactiveTabCountColor = new Color(0.322f, 0.322f, 0.357f, 1f); // #52525B
+    [SerializeField] private TMP_FontAsset activeTabFont;
+    [SerializeField] private TMP_FontAsset inactiveTabFont;
 
     private TabCategory currentTab = TabCategory.Weapons;
     private PlayerMovement playerMovement;
@@ -197,8 +205,19 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
         for (int i = 0; i < tabImages.Length; i++)
         {
             bool active = i == (int)tab;
-            if (tabImages[i] != null) tabImages[i].color = active ? activeTabColor : inactiveTabColor;
-            if (tabTexts[i] != null) tabTexts[i].color = active ? activeTabTextColor : inactiveTabTextColor;
+            if (tabBorders != null && i < tabBorders.Length && tabBorders[i] != null)
+                tabBorders[i].color = active ? activeTabBorderColor : inactiveTabBorderColor;
+            if (tabImages[i] != null)
+                tabImages[i].color = active ? activeTabColor : inactiveTabColor;
+            if (tabTexts != null && i < tabTexts.Length && tabTexts[i] != null)
+            {
+                tabTexts[i].color = active ? activeTabTextColor : inactiveTabTextColor;
+                TMP_FontAsset targetFont = active ? activeTabFont : inactiveTabFont;
+                if (targetFont != null)
+                    tabTexts[i].font = targetFont;
+            }
+            if (tabCountTexts != null && i < tabCountTexts.Length && tabCountTexts[i] != null)
+                tabCountTexts[i].color = active ? activeTabCountColor : inactiveTabCountColor;
         }
 
         if (inventoryScrollRect != null)
@@ -336,9 +355,9 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
 
     private void RefreshTabLabels(PlayerInventory inv)
     {
-        SetTabLabel(TabCategory.Weapons, $"WEAPONS ({CountOf(inv.OwnedWeapons)})");
-        SetTabLabel(TabCategory.Equipment, $"EQUIPMENT ({CountOf(inv.OwnedEquipment)})");
-        SetTabLabel(TabCategory.Consumables, $"CONSUMABLES ({CountOf(inv.OwnedConsumables)})");
+        SetTabLabel(TabCategory.Weapons, "WEAPONS", CountOf(inv.OwnedWeapons));
+        SetTabLabel(TabCategory.Equipment, "EQUIPMENT", CountOf(inv.OwnedEquipment));
+        SetTabLabel(TabCategory.Consumables, "CONSUMABLES", CountOf(inv.OwnedConsumables));
     }
 
     private static int CountOf<T>(IReadOnlyList<T> list) where T : class
@@ -352,11 +371,16 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
         return n;
     }
 
-    private void SetTabLabel(TabCategory tab, string label)
+    private void SetTabLabel(TabCategory tab, string label, int count)
     {
         int idx = (int)tab;
+        bool hasSeparateCount = tabCountTexts != null && idx >= 0 && idx < tabCountTexts.Length && tabCountTexts[idx] != null;
+
         if (tabTexts != null && idx >= 0 && idx < tabTexts.Length && tabTexts[idx] != null)
-            tabTexts[idx].text = label;
+            tabTexts[idx].text = hasSeparateCount ? label : $"{label} ({count})";
+
+        if (hasSeparateCount)
+            tabCountTexts[idx].text = $"({count})";
     }
 
     private void RefreshInventoryList(PlayerInventory inv)

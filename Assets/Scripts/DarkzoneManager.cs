@@ -102,13 +102,22 @@ public class DarkzoneManager : MonoBehaviour
             }
         }
 
-        // 5. Clean up any dropped consumable pickups on the ground
+        // 5. Clean up any dropped consumable and coin pickups on the ground
         ConsumablePickup[] pickups = FindObjectsByType<ConsumablePickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         foreach (var pickup in pickups)
         {
             if (pickup != null && pickup.gameObject.scene.IsValid())
             {
                 SafeDestroy(pickup.gameObject);
+            }
+        }
+
+        CoinPickup[] coins = FindObjectsByType<CoinPickup>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var coin in coins)
+        {
+            if (coin != null && coin.gameObject.scene.IsValid())
+            {
+                SafeDestroy(coin.gameObject);
             }
         }
 
