@@ -19,10 +19,10 @@ public class InventoryDragController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI dragGhostLabel;
     [SerializeField] private LoadoutUI loadoutUI;
 
-    [Header("Minimal Black Theme")]
-    [SerializeField] private Color ghostBorderColor = new Color(0.290f, 0.871f, 0.502f, 1f);      // #4ADE80
-    [SerializeField] private Color ghostInnerColor = new Color(0.067f, 0.067f, 0.078f, 0.96f);    // #111114 @ 96%
-    [SerializeField] private Color ghostLabelColor = new Color(0.957f, 0.957f, 0.961f, 1f);       // #F4F4F5
+    [Header("HUDUI Unified Theme")]
+    [SerializeField] private Color ghostBorderColor = new Color(34f / 255f, 197f / 255f, 94f / 255f, 1f);   // #22C55E
+    [SerializeField] private Color ghostInnerColor = new Color(15f / 255f, 17f / 255f, 20f / 255f, 0.96f); // #0F1114 @ 96%
+    [SerializeField] private Color ghostLabelColor = new Color(241f / 255f, 243f / 255f, 245f / 255f, 1f); // #F1F3F5
 
     [Header("Snap-Back Animation")]
     [SerializeField] private float snapBackDuration = 0.12f;

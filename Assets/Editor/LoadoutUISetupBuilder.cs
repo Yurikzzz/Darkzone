@@ -23,27 +23,33 @@ public static class LoadoutUISetupBuilder
     private const string FontSourceFolder = "Assets/TextMesh Pro/Fonts";
     private const string FontAssetFolder = "Assets/TextMesh Pro/Resources/Fonts & Materials";
 
-    // Minimal Black Palette (matching invUI.pen v2.22)
-    private static readonly Color BgBackdrop = new Color(0.020f, 0.020f, 0.024f, 0.80f);       // #050506 @ 80%
-    private static readonly Color BgVoid = new Color(0.020f, 0.020f, 0.024f, 1f);             // #050506
-    private static readonly Color BgSurface = new Color(0.043f, 0.043f, 0.051f, 1f);          // #0B0B0D
-    private static readonly Color BgCard = new Color(0.067f, 0.067f, 0.078f, 1f);             // #111114
-    private static readonly Color BgEmpty = new Color(0.031f, 0.031f, 0.039f, 1f);            // #08080A
-    private static readonly Color BgWell = new Color(0.024f, 0.024f, 0.027f, 1f);             // #060607
-    private static readonly Color BorderSubtle = new Color(0.094f, 0.094f, 0.114f, 1f);       // #18181D
-    private static readonly Color BorderMedium = new Color(0.153f, 0.153f, 0.180f, 1f);       // #27272E
-    private static readonly Color BorderOccupiedWeapon = new Color(0.247f, 0.247f, 0.275f, 1f);// #3F3F46
-    private static readonly Color TextPrimary = new Color(0.957f, 0.957f, 0.961f, 1f);        // #F4F4F5
-    private static readonly Color TextSecondary = new Color(0.631f, 0.631f, 0.667f, 1f);      // #A1A1AA
-    private static readonly Color TextMuted = new Color(0.443f, 0.443f, 0.478f, 1f);          // #71717A
-    private static readonly Color TextDim = new Color(0.322f, 0.322f, 0.357f, 1f);            // #52525B
-    private static readonly Color StatusActive = new Color(0.290f, 0.871f, 0.502f, 1f);       // #4ADE80
-    private static readonly Color StatusActiveBg = new Color(0.031f, 0.090f, 0.055f, 1f);     // #08170E
-    private static readonly Color StatusActiveBorder = new Color(0.086f, 0.396f, 0.204f, 1f); // #166534
-    private static readonly Color StatusInactive = new Color(0.322f, 0.322f, 0.357f, 1f);     // #52525B
-    private static readonly Color DangerText = new Color(0.973f, 0.443f, 0.443f, 1f);         // #F87171
-    private static readonly Color DangerBg = new Color(0.102f, 0.043f, 0.051f, 1f);           // #1A0B0D
-    private static readonly Color DangerBorder = new Color(0.498f, 0.114f, 0.114f, 1f);       // #7F1D1D
+    private static Color Hex(string hex)
+    {
+        ColorUtility.TryParseHtmlString(hex, out Color c);
+        return c;
+    }
+
+    // Unified HUDUI.pen Palette (+ #2E343C equipped weapon accent border)
+    private static readonly Color BgVoid = Hex("#070809");
+    private static readonly Color BgBackdrop = new Color(BgVoid.r, BgVoid.g, BgVoid.b, 0.85f);
+    private static readonly Color BgSurface = Hex("#0F1114");
+    private static readonly Color BgCard = Hex("#0F1114");
+    private static readonly Color BgEmpty = Hex("#090A0C");
+    private static readonly Color BgWell = Hex("#090A0C");
+    private static readonly Color BorderSubtle = Hex("#191C21");
+    private static readonly Color BorderMedium = Hex("#23272D");
+    private static readonly Color BorderOccupiedWeapon = Hex("#2E343C");
+    private static readonly Color TextPrimary = Hex("#F1F3F5");
+    private static readonly Color TextSecondary = Hex("#8A919A");
+    private static readonly Color TextMuted = Hex("#4F555E");
+    private static readonly Color TextDim = Hex("#4F555E");
+    private static readonly Color StatusActive = Hex("#22C55E");
+    private static readonly Color StatusActiveBg = Hex("#0A2214");
+    private static readonly Color StatusActiveBorder = Hex("#166534");
+    private static readonly Color StatusInactive = Hex("#4F555E");
+    private static readonly Color DangerText = Hex("#EF4444");
+    private static readonly Color DangerBg = Hex("#1A0B0D");
+    private static readonly Color DangerBorder = Hex("#7F1D1D");
 
     private class UIAssets
     {
@@ -52,7 +58,8 @@ public static class LoadoutUISetupBuilder
         public TMP_FontAsset monoRegular;
         public TMP_FontAsset monoSemiBold;
 
-        public Sprite rounded2Px;
+        public Sprite rounded4Px;
+        public Sprite rounded3Px;
         public Sprite circleDot;
         public Sprite iconClose;
         public Sprite iconSwap;
@@ -110,7 +117,10 @@ public static class LoadoutUISetupBuilder
         assets.monoRegular = EnsureTMPFontAsset("JetBrainsMono-Regular", assets.uiRegular);
         assets.monoSemiBold = EnsureTMPFontAsset("JetBrainsMono-SemiBold", assets.monoRegular);
 
-        assets.rounded2Px = EnsureSprite("ui_rounded_2px", 24, 24, true, DrawRoundedRect2Px);
+        assets.rounded4Px = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + "/ui_rounded_4px.png")
+            ?? EnsureSprite("ui_rounded_4px", 24, 24, true, DrawRoundedRect4Px, 6f);
+        assets.rounded3Px = AssetDatabase.LoadAssetAtPath<Sprite>(SpriteFolder + "/ui_rounded_3px.png")
+            ?? EnsureSprite("ui_rounded_3px", 24, 24, true, DrawRoundedRect3Px, 5f);
         assets.circleDot = EnsureSprite("ui_circle_dot", 64, 64, false, DrawCircleDot);
         assets.iconClose = EnsureSprite("icon_close", 64, 64, false, DrawCloseIcon);
         assets.iconSwap = EnsureSprite("icon_swap", 64, 64, false, DrawSwapIcon);
@@ -189,7 +199,7 @@ public static class LoadoutUISetupBuilder
         return AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath) ?? created;
     }
 
-    private static Sprite EnsureSprite(string fileName, int width, int height, bool nineSlice, Func<int, int, Color[]> pixelGenerator)
+    private static Sprite EnsureSprite(string fileName, int width, int height, bool nineSlice, Func<int, int, Color[]> pixelGenerator, float borderPx = 4f)
     {
         string assetPath = $"{SpriteFolder}/{fileName}.png";
         string fullPath = Path.Combine(Directory.GetCurrentDirectory(), assetPath);
@@ -221,9 +231,9 @@ public static class LoadoutUISetupBuilder
                 TextureImporterSettings settings = new TextureImporterSettings();
                 importer.ReadTextureSettings(settings);
                 settings.spriteMeshType = SpriteMeshType.FullRect;
-                settings.spriteBorder = new Vector4(4f, 4f, 4f, 4f);
+                settings.spriteBorder = new Vector4(borderPx, borderPx, borderPx, borderPx);
                 importer.SetTextureSettings(settings);
-                importer.spriteBorder = new Vector4(4f, 4f, 4f, 4f);
+                importer.spriteBorder = new Vector4(borderPx, borderPx, borderPx, borderPx);
             }
 
             importer.SaveAndReimport();
@@ -276,11 +286,13 @@ public static class LoadoutUISetupBuilder
         return (p - center).magnitude - r;
     }
 
-    private static Color[] DrawRoundedRect2Px(int w, int h)
+    private static Color[] DrawRoundedRect4Px(int w, int h) => DrawRoundedRectPx(w, h, 4.0f);
+    private static Color[] DrawRoundedRect3Px(int w, int h) => DrawRoundedRectPx(w, h, 3.0f);
+
+    private static Color[] DrawRoundedRectPx(int w, int h, float radius)
     {
         Color[] px = BlankPixels(w, h);
         Vector2 center = new Vector2(w * 0.5f, h * 0.5f);
-        float radius = 2.0f;
         Vector2 half = new Vector2(w * 0.5f - radius, h * 0.5f - radius);
         PaintCoverage(px, w, h, (x, y) => SdBox(new Vector2(x, y) - center, half) - radius);
         return px;
@@ -426,24 +438,24 @@ public static class LoadoutUISetupBuilder
         GameObject root = new GameObject("InventoryItemSlot", typeof(RectTransform));
         try
         {
-            Image borderImg = AddRoundedImage(root, assets.rounded2Px, BorderMedium);
+            Image borderImg = AddRoundedImage(root, assets.rounded4Px, BorderMedium);
             CanvasGroup cg = root.AddComponent<CanvasGroup>();
             InventoryItemSlotUI slotComp = root.AddComponent<InventoryItemSlotUI>();
             SetLE(root, 0f, 84f, 1f, 0f);
 
             RectTransform inner = NewRect("InnerFill", root.transform);
             Stretch(inner, 1f, 1f, 1f, 1f);
-            Image innerImg = AddRoundedImage(inner.gameObject, assets.rounded2Px, BgCard);
+            Image innerImg = AddRoundedImage(inner.gameObject, assets.rounded4Px, BgCard);
             AddLayout(inner.gameObject, false, 16f, new RectOffset(14, 14, 14, 14), TextAnchor.MiddleLeft);
 
             // Thumbnail box (72x54 with 1px subtle border)
             RectTransform thumbBorder = NewRect("ThumbBoxBorder", inner);
-            Image thumbBorderImg = AddRoundedImage(thumbBorder.gameObject, assets.rounded2Px, BorderSubtle);
+            Image thumbBorderImg = AddRoundedImage(thumbBorder.gameObject, assets.rounded3Px, BorderMedium);
             SetLE(thumbBorder.gameObject, 72f, 54f, 0f, 0f);
 
             RectTransform thumbFill = NewRect("ThumbBoxFill", thumbBorder);
             Stretch(thumbFill, 1f, 1f, 1f, 1f);
-            Image thumbImg = AddRoundedImage(thumbFill.gameObject, assets.rounded2Px, BgWell);
+            Image thumbImg = AddRoundedImage(thumbFill.gameObject, assets.rounded3Px, BgWell);
 
             RectTransform iconRt = NewRect("Icon", thumbFill);
             Stretch(iconRt, 8f, 8f, 8f, 8f);
@@ -469,12 +481,12 @@ public static class LoadoutUISetupBuilder
 
             // Equipped Slot Badge
             RectTransform badgeBorder = NewRect("EquippedBadge", actions);
-            Image badgeBorderImg = AddRoundedImage(badgeBorder.gameObject, assets.rounded2Px, StatusActiveBorder);
+            Image badgeBorderImg = AddRoundedImage(badgeBorder.gameObject, assets.rounded3Px, StatusActiveBorder);
             SetLE(badgeBorder.gameObject, -1f, 26f, 0f, 0f);
 
             RectTransform badgeBg = NewRect("Fill", badgeBorder);
             Stretch(badgeBg, 1f, 1f, 1f, 1f);
-            Image badgeBgImg = AddRoundedImage(badgeBg.gameObject, assets.rounded2Px, StatusActiveBg);
+            Image badgeBgImg = AddRoundedImage(badgeBg.gameObject, assets.rounded3Px, StatusActiveBg);
             // Also size the outer badge to fit contents via ContentSizeFitter
             HorizontalLayoutGroup badgeLayout = badgeBorder.gameObject.AddComponent<HorizontalLayoutGroup>();
             badgeLayout.padding = new RectOffset(10, 10, 5, 5);
@@ -508,7 +520,7 @@ public static class LoadoutUISetupBuilder
             Button unequipBtn = CreateMinimalButton(
                 "UnequipButton", actions, "UNEQUIP",
                 DangerBg, DangerBorder, DangerText,
-                10f, assets.monoSemiBold, assets.rounded2Px,
+                10f, assets.monoSemiBold, assets.rounded3Px,
                 new RectOffset(10, 10, 4, 4), 26f);
             unequipBtn.GetComponentInChildren<TextMeshProUGUI>().characterSpacing = 5f;
             unequipBtn.gameObject.SetActive(false);
@@ -517,7 +529,7 @@ public static class LoadoutUISetupBuilder
             Button trashBtn = CreateIconButton(
                 "TrashButton", actions,
                 BgWell, BorderMedium, TextSecondary,
-                assets.iconTrash, assets.rounded2Px,
+                assets.iconTrash, assets.rounded3Px,
                 26f, 26f, 13f);
 
             // Wire serialized fields on InventoryItemSlotUI
@@ -557,14 +569,14 @@ public static class LoadoutUISetupBuilder
         GameObject root = new GameObject("LoadoutEquipmentSlot", typeof(RectTransform));
         try
         {
-            Image borderImg = AddRoundedImage(root, assets.rounded2Px, BorderSubtle);
+            Image borderImg = AddRoundedImage(root, assets.rounded4Px, BorderSubtle);
             CanvasGroup cg = root.AddComponent<CanvasGroup>();
             LoadoutSlotUI slotComp = root.AddComponent<LoadoutSlotUI>();
             SetLE(root, 0f, 102f, 1f, 0f);
 
             RectTransform inner = NewRect("InnerFill", root.transform);
             Stretch(inner, 1f, 1f, 1f, 1f);
-            Image innerImg = AddRoundedImage(inner.gameObject, assets.rounded2Px, BgEmpty);
+            Image innerImg = AddRoundedImage(inner.gameObject, assets.rounded4Px, BgEmpty);
             AddLayout(inner.gameObject, false, 14f, new RectOffset(14, 14, 14, 14), TextAnchor.MiddleLeft);
 
             // Active Left Accent Bar (2x58, visible when occupied)
@@ -577,12 +589,12 @@ public static class LoadoutUISetupBuilder
 
             // Thumbnail box (76x58 default, resized per slot kind)
             RectTransform thumbBorder = NewRect("ThumbBoxBorder", inner);
-            Image thumbBorderImg = AddRoundedImage(thumbBorder.gameObject, assets.rounded2Px, BorderSubtle);
+            Image thumbBorderImg = AddRoundedImage(thumbBorder.gameObject, assets.rounded3Px, BorderSubtle);
             SetLE(thumbBorder.gameObject, 76f, 58f, 0f, 0f);
 
             RectTransform thumbFill = NewRect("ThumbBoxFill", thumbBorder);
             Stretch(thumbFill, 1f, 1f, 1f, 1f);
-            Image thumbImg = AddRoundedImage(thumbFill.gameObject, assets.rounded2Px, BgWell);
+            Image thumbImg = AddRoundedImage(thumbFill.gameObject, assets.rounded3Px, BgWell);
 
             // Equipped Sprite Icon
             RectTransform iconRt = NewRect("Icon", thumbFill);
@@ -624,12 +636,12 @@ public static class LoadoutUISetupBuilder
 
             // Status Badge Pill
             RectTransform badgeBorder = NewRect("StatusBadge", topRow);
-            Image badgeBorderImg = AddRoundedImage(badgeBorder.gameObject, assets.rounded2Px, BorderSubtle);
+            Image badgeBorderImg = AddRoundedImage(badgeBorder.gameObject, assets.rounded3Px, BorderSubtle);
             SetLE(badgeBorder.gameObject, -1f, 20f, 0f, 0f);
 
             RectTransform badgeBg = NewRect("Fill", badgeBorder);
             Stretch(badgeBg, 1f, 1f, 1f, 1f);
-            Image badgeBgImg = AddRoundedImage(badgeBg.gameObject, assets.rounded2Px, BgWell);
+            Image badgeBgImg = AddRoundedImage(badgeBg.gameObject, assets.rounded3Px, BgWell);
             LayoutElement badgeBgIgnore = badgeBg.gameObject.AddComponent<LayoutElement>();
             badgeBgIgnore.ignoreLayout = true;
 
@@ -671,7 +683,7 @@ public static class LoadoutUISetupBuilder
             Button unequipBtn = CreateMinimalButton(
                 "UnequipButton", bottomRow, "UNEQUIP",
                 DangerBg, DangerBorder, DangerText,
-                10f, assets.monoSemiBold, assets.rounded2Px,
+                10f, assets.monoSemiBold, assets.rounded3Px,
                 new RectOffset(10, 10, 3, 3), 22f);
             unequipBtn.GetComponentInChildren<TextMeshProUGUI>().characterSpacing = 4f;
             unequipBtn.gameObject.SetActive(false);
@@ -755,11 +767,11 @@ public static class LoadoutUISetupBuilder
         windowBorder.pivot = new Vector2(0.5f, 0.5f);
         windowBorder.sizeDelta = new Vector2(1442f, 862f);
         windowBorder.anchoredPosition = Vector2.zero;
-        AddRoundedImage(windowBorder.gameObject, assets.rounded2Px, BorderSubtle);
+        AddRoundedImage(windowBorder.gameObject, assets.rounded4Px, BorderMedium);
 
         RectTransform window = NewRect("Window", windowBorder);
         Stretch(window, 1f, 1f, 1f, 1f);
-        AddRoundedImage(window.gameObject, assets.rounded2Px, BgVoid);
+        AddRoundedImage(window.gameObject, assets.rounded4Px, BgVoid);
         AddLayout(window.gameObject, true, 0f, new RectOffset(0, 0, 0, 0), TextAnchor.UpperLeft);
 
         // ---------------- Header (64px) ----------------
@@ -812,7 +824,7 @@ public static class LoadoutUISetupBuilder
         Button closeBtn = CreateIconButton(
             "CloseButton", headerContent,
             BgCard, BorderMedium, TextSecondary,
-            assets.iconClose, assets.rounded2Px,
+            assets.iconClose, assets.rounded4Px,
             34f, 34f, 15f);
 
         // ---------------- Main Content ----------------
@@ -913,14 +925,14 @@ public static class LoadoutUISetupBuilder
 
         SectionHeaderRow(rightCol, "04 // INVENTORY", assets);
 
-        // Category Tabs Outer Container (#0B0B0D with #18181D 1px border, 4px padding, 6px gap)
+        // Category Tabs Outer Container (#090A0C inset track with #23272D 1px border, 4px padding, 6px gap)
         RectTransform tabBarBorder = NewRect("CategoryTabsBorder", rightCol);
-        AddRoundedImage(tabBarBorder.gameObject, assets.rounded2Px, BorderSubtle);
+        AddRoundedImage(tabBarBorder.gameObject, assets.rounded4Px, BorderMedium);
         SetLE(tabBarBorder.gameObject, 0f, 48f, 1f, 0f);
 
         RectTransform tabBar = NewRect("CategoryTabs", tabBarBorder);
         Stretch(tabBar, 1f, 1f, 1f, 1f);
-        AddRoundedImage(tabBar.gameObject, assets.rounded2Px, BgSurface);
+        AddRoundedImage(tabBar.gameObject, assets.rounded4Px, BgEmpty);
         AddLayout(tabBar.gameObject, false, 6f, new RectOffset(4, 4, 4, 4), TextAnchor.MiddleCenter);
 
         string[] tabNames = new[] { "WEAPONS", "EQUIPMENT", "CONSUMABLES" };
@@ -935,11 +947,11 @@ public static class LoadoutUISetupBuilder
             bool isDefaultActive = i == 0;
             RectTransform tabOuter = NewRect($"Tab_{tabNames[i]}", tabBar);
             SetLE(tabOuter.gameObject, 0f, 38f, 1f, 0f);
-            Image tabOuterBorder = AddRoundedImage(tabOuter.gameObject, assets.rounded2Px, isDefaultActive ? BorderMedium : BgSurface);
+            Image tabOuterBorder = AddRoundedImage(tabOuter.gameObject, assets.rounded4Px, isDefaultActive ? BorderMedium : BgEmpty);
 
             RectTransform tabInner = NewRect("Fill", tabOuter);
             Stretch(tabInner, 1f, 1f, 1f, 1f);
-            Image tabInnerImg = AddRoundedImage(tabInner.gameObject, assets.rounded2Px, isDefaultActive ? BgCard : BgSurface);
+            Image tabInnerImg = AddRoundedImage(tabInner.gameObject, assets.rounded4Px, isDefaultActive ? BgCard : BgEmpty);
             AddLayout(tabInner.gameObject, false, 8f, new RectOffset(8, 8, 0, 0), TextAnchor.MiddleCenter);
 
             Button tabBtn = tabOuter.gameObject.AddComponent<Button>();
@@ -1049,23 +1061,23 @@ public static class LoadoutUISetupBuilder
         RectTransform dragGhost = NewRect("DragGhost", dragLayer);
         dragGhost.sizeDelta = new Vector2(228f, 58f);
         dragGhost.pivot = new Vector2(0.5f, 0.5f);
-        Image ghostBorder = AddRoundedImage(dragGhost.gameObject, assets.rounded2Px, StatusActive);
+        Image ghostBorder = AddRoundedImage(dragGhost.gameObject, assets.rounded4Px, StatusActive);
         ghostBorder.raycastTarget = false;
 
         RectTransform ghostInner = NewRect("InnerFill", dragGhost);
         Stretch(ghostInner, 1f, 1f, 1f, 1f);
-        Image ghostInnerImg = AddRoundedImage(ghostInner.gameObject, assets.rounded2Px, new Color(BgCard.r, BgCard.g, BgCard.b, 0.96f));
+        Image ghostInnerImg = AddRoundedImage(ghostInner.gameObject, assets.rounded4Px, new Color(BgCard.r, BgCard.g, BgCard.b, 0.96f));
         ghostInnerImg.raycastTarget = false;
         AddLayout(ghostInner.gameObject, false, 12f, new RectOffset(10, 12, 8, 8), TextAnchor.MiddleLeft);
 
         RectTransform ghostThumbBorder = NewRect("ThumbBorder", ghostInner);
-        Image ghostThumbBorderImg = AddRoundedImage(ghostThumbBorder.gameObject, assets.rounded2Px, BorderMedium);
+        Image ghostThumbBorderImg = AddRoundedImage(ghostThumbBorder.gameObject, assets.rounded3Px, BorderMedium);
         ghostThumbBorderImg.raycastTarget = false;
         SetLE(ghostThumbBorder.gameObject, 42f, 40f, 0f, 0f);
 
         RectTransform ghostThumbFill = NewRect("ThumbFill", ghostThumbBorder);
         Stretch(ghostThumbFill, 1f, 1f, 1f, 1f);
-        Image ghostThumbImg = AddRoundedImage(ghostThumbFill.gameObject, assets.rounded2Px, BgWell);
+        Image ghostThumbImg = AddRoundedImage(ghostThumbFill.gameObject, assets.rounded3Px, BgWell);
         ghostThumbImg.raycastTarget = false;
 
         RectTransform ghostIconRt = NewRect("Icon", ghostThumbFill);
@@ -1135,9 +1147,9 @@ public static class LoadoutUISetupBuilder
         uiSo.FindProperty("inventoryItemSlotPrefab").objectReferenceValue = itemSlotPrefab;
         uiSo.FindProperty("dragController").objectReferenceValue = dragCtrl;
         uiSo.FindProperty("activeTabBorderColor").colorValue = BorderMedium;
-        uiSo.FindProperty("inactiveTabBorderColor").colorValue = BgSurface;
+        uiSo.FindProperty("inactiveTabBorderColor").colorValue = BgEmpty;
         uiSo.FindProperty("activeTabColor").colorValue = BgCard;
-        uiSo.FindProperty("inactiveTabColor").colorValue = BgSurface;
+        uiSo.FindProperty("inactiveTabColor").colorValue = BgEmpty;
         uiSo.FindProperty("activeTabTextColor").colorValue = TextPrimary;
         uiSo.FindProperty("inactiveTabTextColor").colorValue = TextMuted;
         uiSo.FindProperty("activeTabCountColor").colorValue = StatusActive;
@@ -1157,6 +1169,13 @@ public static class LoadoutUISetupBuilder
     /// </summary>
     private static void UpgradeCanvasAndExistingHUD(GameObject canvasObj)
     {
+        Canvas canvas = canvasObj.GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.vertexColorAlwaysGammaSpace = true;
+            EditorUtility.SetDirty(canvas);
+        }
+
         CanvasScaler scaler = canvasObj.GetComponent<CanvasScaler>();
         if (scaler != null)
         {
@@ -1401,12 +1420,12 @@ public static class LoadoutUISetupBuilder
     private static Button CreateSwapSlotsButton(Transform parent, UIAssets assets)
     {
         RectTransform outer = NewRect("SwapSlotsButton", parent);
-        AddRoundedImage(outer.gameObject, assets.rounded2Px, BorderSubtle);
+        AddRoundedImage(outer.gameObject, assets.rounded4Px, BorderMedium);
         SetLE(outer.gameObject, 0f, 34f, 1f, 0f);
 
         RectTransform fill = NewRect("Fill", outer);
         Stretch(fill, 1f, 1f, 1f, 1f);
-        Image fillImg = AddRoundedImage(fill.gameObject, assets.rounded2Px, BgSurface);
+        Image fillImg = AddRoundedImage(fill.gameObject, assets.rounded4Px, BgSurface);
         AddLayout(fill.gameObject, false, 8f, new RectOffset(12, 12, 0, 0), TextAnchor.MiddleCenter);
 
         Button btn = outer.gameObject.AddComponent<Button>();

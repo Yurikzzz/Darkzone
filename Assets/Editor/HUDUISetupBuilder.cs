@@ -19,16 +19,24 @@ public static class HUDUISetupBuilder
     private const string SpriteFolder = "Assets/Sprites/UI";
     private const string FontAssetFolder = "Assets/TextMesh Pro/Resources/Fonts & Materials";
 
-    // HUDUI.pen v2.22 Color Tokens
-    private static readonly Color BgSurface = new Color(0.059f, 0.067f, 0.078f, 1f);        // #0F1114
-    private static readonly Color BgInset = new Color(0.035f, 0.039f, 0.047f, 1f);          // #090A0C
-    private static readonly Color BorderSubtle = new Color(0.137f, 0.153f, 0.176f, 1f);     // #23272D
-    private static readonly Color TextPrimary = new Color(0.945f, 0.953f, 0.961f, 1f);      // #F1F3F5
-    private static readonly Color TextSecondary = new Color(0.541f, 0.569f, 0.604f, 1f);    // #8A919A
-    private static readonly Color TextMuted = new Color(0.310f, 0.333f, 0.369f, 1f);        // #4F555E
-    private static readonly Color AccentGreen = new Color(0.133f, 0.773f, 0.369f, 1f);      // #22C55E
-    private static readonly Color AccentGreenBorder = new Color(0.086f, 0.396f, 0.204f, 1f);// #166534
-    private static readonly Color AccentCoin = new Color(0.784f, 0.643f, 0.302f, 1f);       // #C8A44D
+    // Exact HUDUI.pen v2.22 Color Tokens (parsed via ColorUtility to avoid float rounding drift)
+    private static Color Hex(string hex)
+    {
+        ColorUtility.TryParseHtmlString(hex, out Color c);
+        return c;
+    }
+
+    private static readonly Color BgSurface = Hex("#0F1114");
+    private static readonly Color BgInset = Hex("#090A0C");
+    private static readonly Color BorderSubtle = Hex("#23272D");
+    private static readonly Color BorderDim = Hex("#191C21");
+    private static readonly Color TextPrimary = Hex("#F1F3F5");
+    private static readonly Color TextSecondary = Hex("#8A919A");
+    private static readonly Color TextMuted = Hex("#4F555E");
+    private static readonly Color AccentGreen = Hex("#22C55E");
+    private static readonly Color AccentGreenBg = Hex("#0A2214");
+    private static readonly Color AccentGreenBorder = Hex("#166534");
+    private static readonly Color AccentCoin = Hex("#C8A44D");
 
     private class HUDAssets
     {
@@ -321,6 +329,14 @@ public static class HUDUISetupBuilder
         {
             Debug.LogError("[HUDUISetupBuilder] Could not find 'HUD Canvas' in the active scene.");
             return;
+        }
+
+        // Ensure vertex colors render in sRGB/Gamma even under Linear color space (matches Pen.dev exact hexes)
+        Canvas canvas = canvasObj.GetComponent<Canvas>();
+        if (canvas != null)
+        {
+            canvas.vertexColorAlwaysGammaSpace = true;
+            EditorUtility.SetDirty(canvas);
         }
 
         // Ensure 1920x1080 16:9 CanvasScaler

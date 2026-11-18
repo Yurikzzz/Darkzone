@@ -48,15 +48,15 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
     [Header("Drag Controller")]
     [SerializeField] private InventoryDragController dragController;
 
-    [Header("Minimal Black Tab Palette")]
-    [SerializeField] private Color activeTabBorderColor = new Color(0.153f, 0.153f, 0.180f, 1f);  // #27272E
-    [SerializeField] private Color inactiveTabBorderColor = new Color(0.043f, 0.043f, 0.051f, 1f);// #0B0B0D
-    [SerializeField] private Color activeTabColor = new Color(0.067f, 0.067f, 0.078f, 1f);        // #111114
-    [SerializeField] private Color inactiveTabColor = new Color(0.043f, 0.043f, 0.051f, 1f);      // #0B0B0D
-    [SerializeField] private Color activeTabTextColor = new Color(0.957f, 0.957f, 0.961f, 1f);    // #F4F4F5
-    [SerializeField] private Color inactiveTabTextColor = new Color(0.443f, 0.443f, 0.478f, 1f);  // #71717A
-    [SerializeField] private Color activeTabCountColor = new Color(0.290f, 0.871f, 0.502f, 1f);   // #4ADE80
-    [SerializeField] private Color inactiveTabCountColor = new Color(0.322f, 0.322f, 0.357f, 1f); // #52525B
+    [Header("HUDUI Unified Tab Palette")]
+    [SerializeField] private Color activeTabBorderColor = new Color(35f / 255f, 39f / 255f, 45f / 255f, 1f);     // #23272D
+    [SerializeField] private Color inactiveTabBorderColor = new Color(9f / 255f, 10f / 255f, 12f / 255f, 1f);    // #090A0C
+    [SerializeField] private Color activeTabColor = new Color(15f / 255f, 17f / 255f, 20f / 255f, 1f);           // #0F1114
+    [SerializeField] private Color inactiveTabColor = new Color(9f / 255f, 10f / 255f, 12f / 255f, 1f);          // #090A0C
+    [SerializeField] private Color activeTabTextColor = new Color(241f / 255f, 243f / 255f, 245f / 255f, 1f);    // #F1F3F5
+    [SerializeField] private Color inactiveTabTextColor = new Color(79f / 255f, 85f / 255f, 94f / 255f, 1f);     // #4F555E
+    [SerializeField] private Color activeTabCountColor = new Color(34f / 255f, 197f / 255f, 94f / 255f, 1f);     // #22C55E
+    [SerializeField] private Color inactiveTabCountColor = new Color(79f / 255f, 85f / 255f, 94f / 255f, 1f);    // #4F555E
     [SerializeField] private TMP_FontAsset activeTabFont;
     [SerializeField] private TMP_FontAsset inactiveTabFont;
 

@@ -29,13 +29,13 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
     [SerializeField] private Button trashButton;
     [SerializeField] private CanvasGroup canvasGroup;
 
-    [Header("Minimal Black Palette")]
-    [SerializeField] private Color defaultBorderColor = new Color(0.153f, 0.153f, 0.180f, 1f);     // #27272E
-    [SerializeField] private Color equippedBorderColor = new Color(0.247f, 0.247f, 0.275f, 1f);    // #3F3F46
-    [SerializeField] private Color cardFillColor = new Color(0.067f, 0.067f, 0.078f, 1f);          // #111114
-    [SerializeField] private Color activeStatusColor = new Color(0.290f, 0.871f, 0.502f, 1f);      // #4ADE80
-    [SerializeField] private Color activeBadgeBgColor = new Color(0.031f, 0.090f, 0.055f, 1f);     // #08170E
-    [SerializeField] private Color activeBadgeBorderColor = new Color(0.086f, 0.396f, 0.204f, 1f); // #166534
+    [Header("HUDUI Unified Palette")]
+    [SerializeField] private Color defaultBorderColor = new Color(35f / 255f, 39f / 255f, 45f / 255f, 1f);      // #23272D
+    [SerializeField] private Color equippedBorderColor = new Color(46f / 255f, 52f / 255f, 60f / 255f, 1f);     // #2E343C
+    [SerializeField] private Color cardFillColor = new Color(15f / 255f, 17f / 255f, 20f / 255f, 1f);           // #0F1114
+    [SerializeField] private Color activeStatusColor = new Color(34f / 255f, 197f / 255f, 94f / 255f, 1f);      // #22C55E
+    [SerializeField] private Color activeBadgeBgColor = new Color(10f / 255f, 34f / 255f, 20f / 255f, 1f);      // #0A2214
+    [SerializeField] private Color activeBadgeBorderColor = new Color(22f / 255f, 101f / 255f, 52f / 255f, 1f); // #166534
 
     private ScriptableObject itemData;
     private PlayerInventory inventory;
@@ -98,9 +98,9 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
             if (statsText != null)
             {
                 statsText.text =
-                    $"<color=#A1A1AA>DMG {weapon.damage:0}</color>  <color=#52525B>•</color>  " +
-                    $"<color=#A1A1AA>MAG {weapon.magazineSize}</color>  <color=#52525B>•</color>  " +
-                    $"<color=#71717A>{(weapon.isAutomatic ? "AUTO" : "SEMI")}</color>";
+                    $"<color=#8A919A>DMG {weapon.damage:0}</color>  <color=#4F555E>•</color>  " +
+                    $"<color=#8A919A>MAG {weapon.magazineSize}</color>  <color=#4F555E>•</color>  " +
+                    $"<color=#4F555E>{(weapon.isAutomatic ? "AUTO" : "SEMI")}</color>";
             }
         }
         else if (item is ConsumableData consumable)
@@ -141,7 +141,7 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
             if (titleText != null)
                 titleText.text = item.name;
             if (statsText != null)
-                statsText.text = "<color=#A1A1AA>Equipment gear</color>";
+                statsText.text = "<color=#8A919A>Equipment gear</color>";
         }
 
         if (borderImage != null)

@@ -44,25 +44,25 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
     [SerializeField] private Button unequipButton;
     [SerializeField] private CanvasGroup canvasGroup;
 
-    [Header("Minimal Black Palette")]
-    [SerializeField] private Color emptyBorderColor = new Color(0.094f, 0.094f, 0.114f, 1f);          // #18181D
-    [SerializeField] private Color occupiedWeaponBorderColor = new Color(0.247f, 0.247f, 0.275f, 1f); // #3F3F46
-    [SerializeField] private Color occupiedGearBorderColor = new Color(0.153f, 0.153f, 0.180f, 1f);   // #27272E
-    [SerializeField] private Color emptyInnerColor = new Color(0.031f, 0.031f, 0.039f, 1f);           // #08080A
-    [SerializeField] private Color occupiedInnerColor = new Color(0.067f, 0.067f, 0.078f, 1f);        // #111114
-    [SerializeField] private Color thumbEmptyBorderColor = new Color(0.094f, 0.094f, 0.114f, 1f);     // #18181D
-    [SerializeField] private Color thumbOccupiedBorderColor = new Color(0.153f, 0.153f, 0.180f, 1f);  // #27272E
-    [SerializeField] private Color activeStatusColor = new Color(0.290f, 0.871f, 0.502f, 1f);         // #4ADE80
-    [SerializeField] private Color activeBadgeBgColor = new Color(0.031f, 0.090f, 0.055f, 1f);        // #08170E
-    [SerializeField] private Color activeBadgeBorderColor = new Color(0.086f, 0.396f, 0.204f, 1f);    // #166534
-    [SerializeField] private Color inactiveBadgeBgColor = new Color(0.024f, 0.024f, 0.027f, 1f);      // #060607
-    [SerializeField] private Color inactiveBadgeBorderColor = new Color(0.094f, 0.094f, 0.114f, 1f);  // #18181D
-    [SerializeField] private Color inactiveDotColor = new Color(0.322f, 0.322f, 0.357f, 1f);          // #52525B
-    [SerializeField] private Color primaryTextColor = new Color(0.957f, 0.957f, 0.961f, 1f);          // #F4F4F5
-    [SerializeField] private Color secondaryTextColor = new Color(0.631f, 0.631f, 0.667f, 1f);        // #A1A1AA
-    [SerializeField] private Color mutedTextColor = new Color(0.443f, 0.443f, 0.478f, 1f);            // #71717A
-    [SerializeField] private Color highlightValidBorderColor = new Color(0.290f, 0.871f, 0.502f, 1f); // #4ADE80
-    [SerializeField] private Color highlightValidInnerColor = new Color(0.031f, 0.090f, 0.055f, 1f);  // #08170E
+    [Header("HUDUI Unified Palette")]
+    [SerializeField] private Color emptyBorderColor = new Color(25f / 255f, 28f / 255f, 33f / 255f, 1f);            // #191C21
+    [SerializeField] private Color occupiedWeaponBorderColor = new Color(46f / 255f, 52f / 255f, 60f / 255f, 1f);   // #2E343C
+    [SerializeField] private Color occupiedGearBorderColor = new Color(35f / 255f, 39f / 255f, 45f / 255f, 1f);     // #23272D
+    [SerializeField] private Color emptyInnerColor = new Color(9f / 255f, 10f / 255f, 12f / 255f, 1f);              // #090A0C
+    [SerializeField] private Color occupiedInnerColor = new Color(15f / 255f, 17f / 255f, 20f / 255f, 1f);          // #0F1114
+    [SerializeField] private Color thumbEmptyBorderColor = new Color(25f / 255f, 28f / 255f, 33f / 255f, 1f);       // #191C21
+    [SerializeField] private Color thumbOccupiedBorderColor = new Color(35f / 255f, 39f / 255f, 45f / 255f, 1f);    // #23272D
+    [SerializeField] private Color activeStatusColor = new Color(34f / 255f, 197f / 255f, 94f / 255f, 1f);          // #22C55E
+    [SerializeField] private Color activeBadgeBgColor = new Color(10f / 255f, 34f / 255f, 20f / 255f, 1f);          // #0A2214
+    [SerializeField] private Color activeBadgeBorderColor = new Color(22f / 255f, 101f / 255f, 52f / 255f, 1f);     // #166534
+    [SerializeField] private Color inactiveBadgeBgColor = new Color(9f / 255f, 10f / 255f, 12f / 255f, 1f);         // #090A0C
+    [SerializeField] private Color inactiveBadgeBorderColor = new Color(25f / 255f, 28f / 255f, 33f / 255f, 1f);    // #191C21
+    [SerializeField] private Color inactiveDotColor = new Color(79f / 255f, 85f / 255f, 94f / 255f, 1f);            // #4F555E
+    [SerializeField] private Color primaryTextColor = new Color(241f / 255f, 243f / 255f, 245f / 255f, 1f);         // #F1F3F5
+    [SerializeField] private Color secondaryTextColor = new Color(138f / 255f, 145f / 255f, 154f / 255f, 1f);       // #8A919A
+    [SerializeField] private Color mutedTextColor = new Color(79f / 255f, 85f / 255f, 94f / 255f, 1f);              // #4F555E
+    [SerializeField] private Color highlightValidBorderColor = new Color(34f / 255f, 197f / 255f, 94f / 255f, 1f);  // #22C55E
+    [SerializeField] private Color highlightValidInnerColor = new Color(10f / 255f, 34f / 255f, 20f / 255f, 1f);    // #0A2214
 
     [Header("Controllers")]
     [SerializeField] private InventoryDragController dragController;
@@ -115,9 +115,9 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             if (statsText != null)
             {
                 statsText.text =
-                    $"<color=#A1A1AA>DMG {weapon.damage:0}</color>  <color=#52525B>•</color>  " +
-                    $"<color=#A1A1AA>MAG {weapon.magazineSize}</color>  <color=#52525B>•</color>  " +
-                    $"<color=#71717A>{(weapon.isAutomatic ? "AUTO" : "SEMI")}</color>";
+                    $"<color=#8A919A>DMG {weapon.damage:0}</color>  <color=#4F555E>•</color>  " +
+                    $"<color=#8A919A>MAG {weapon.magazineSize}</color>  <color=#4F555E>•</color>  " +
+                    $"<color=#4F555E>{(weapon.isAutomatic ? "AUTO" : "SEMI")}</color>";
             }
         }
         else if (item is ConsumableData consumable)
@@ -153,7 +153,7 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             }
             if (statsText != null)
             {
-                statsText.text = "<color=#A1A1AA>Equipped gear</color>";
+                statsText.text = "<color=#8A919A>Equipped gear</color>";
             }
         }
         else
@@ -170,7 +170,7 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             }
             if (statsText != null)
             {
-                statsText.text = $"<color=#52525B>{GetEmptyHint()}</color>";
+                statsText.text = $"<color=#4F555E>{GetEmptyHint()}</color>";
             }
         }
 
