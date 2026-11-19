@@ -34,6 +34,14 @@ public class ConsumableData : ScriptableObject
     [Tooltip("Minimum time in seconds between uses.")]
     public float cooldown = 0.5f;
 
+    [Header("Stacking Settings")]
+    [Tooltip("If true, identical consumables merge into a single stack in stash, active inventory, and HUD.")]
+    public bool isStackable = true;
+
+    [Tooltip("Maximum number of units that can be equipped into a single quick-slot from the loadout menu.")]
+    [Min(1)]
+    public int maxQuickSlotStack = 5;
+
     [Header("Healing Settings (Only for Healing type)")]
     [Tooltip("Amount of health restored immediately upon use.")]
     public float healAmount = 50f;
@@ -75,6 +83,39 @@ public class ConsumableData : ScriptableObject
     public bool isRuntimeInstance;
 
     /// <summary>
+    /// Canonical ScriptableObject template asset used for stack identity matching.
+    /// </summary>
+    [NonSerialized]
+    public ConsumableData templateAsset;
+
+    /// <summary>
+    /// Returns the canonical template asset for this consumable (or self if already the template).
+    /// </summary>
+    public ConsumableData GetTemplate()
+    {
+        return templateAsset != null ? templateAsset : this;
+    }
+
+    /// <summary>
+    /// Returns true if this consumable represents the same stackable item type as <paramref name="other"/>.
+    /// Non-stackable items only match by exact object reference.
+    /// </summary>
+    public bool Matches(ConsumableData other)
+    {
+        if (other == null) return false;
+        if (!isStackable || !other.isStackable) return this == other;
+
+        ConsumableData myTemplate = GetTemplate();
+        ConsumableData otherTemplate = other.GetTemplate();
+        if (myTemplate == otherTemplate) return true;
+
+        return !myTemplate.isRuntimeInstance &&
+               !otherTemplate.isRuntimeInstance &&
+               myTemplate.type == otherTemplate.type &&
+               string.Equals(myTemplate.consumableName, otherTemplate.consumableName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
     /// Creates an independent runtime instance of this consumable with its own separate stats.
     /// </summary>
     public ConsumableData CreateRuntimeInstance()
@@ -82,6 +123,7 @@ public class ConsumableData : ScriptableObject
         ConsumableData instance = Instantiate(this);
         instance.name = name;
         instance.isRuntimeInstance = true;
+        instance.templateAsset = GetTemplate();
         return instance;
     }
 

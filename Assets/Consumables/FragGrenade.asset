@@ -19,6 +19,8 @@ MonoBehaviour:
   tintColor: {r: 1, g: 0.55, b: 0.15, a: 1}
   type: 1
   cooldown: 0.5
+  isStackable: 1
+  maxQuickSlotStack: 5
   healAmount: 50
   healEffectColor: {r: 0.2, g: 0.95, b: 0.35, a: 0.9}
   grenadeDamage: 80

@@ -33,6 +33,12 @@ public class ConsumableHUD : MonoBehaviour
 
     private PlayerInventory boundInventory;
 
+    private void OnEnable()
+    {
+        TrySubscribe();
+        RefreshHUD();
+    }
+
     private void Start()
     {
         TrySubscribe();
@@ -82,8 +88,7 @@ public class ConsumableHUD : MonoBehaviour
         if (coinValueText != null)
             coinValueText.text = FormatCoins(inv.Coins);
 
-        var equipped = inv.EquippedConsumables;
-        var owned = inv.OwnedConsumables;
+        var equippedStacks = inv.EquippedConsumableStacks;
 
         if (slotViews == null) return;
 
@@ -92,18 +97,26 @@ public class ConsumableHUD : MonoBehaviour
             ConsumableSlotView view = slotViews[i];
             if (view == null) continue;
 
-            ConsumableData item = (equipped != null && i < equipped.Count) ? equipped[i] as ConsumableData : null;
+            ConsumableStack stack = (equippedStacks != null && i < equippedStacks.Count) ? equippedStacks[i] : null;
+            ConsumableData item = (stack != null && !stack.IsEmpty) ? stack.item : null;
 
             if (item != null)
             {
-                int totalCount = CountMatchingConsumables(owned, item);
-
                 if (view.keybindText != null) view.keybindText.color = primaryTextColor;
                 if (view.slotLabelText != null) view.slotLabelText.color = secondaryTextColor;
                 if (view.countText != null)
                 {
-                    view.countText.text = $"x{totalCount}";
-                    view.countText.color = accentGreenColor;
+                    if (item.isStackable)
+                    {
+                        view.countText.gameObject.SetActive(true);
+                        view.countText.text = $"{stack.quantity}x";
+                        view.countText.color = accentGreenColor;
+                    }
+                    else
+                    {
+                        view.countText.text = "";
+                        view.countText.gameObject.SetActive(false);
+                    }
                 }
                 if (view.itemNameText != null)
                 {
@@ -117,7 +130,8 @@ public class ConsumableHUD : MonoBehaviour
                 if (view.slotLabelText != null) view.slotLabelText.color = mutedTextColor;
                 if (view.countText != null)
                 {
-                    view.countText.text = "x0";
+                    view.countText.gameObject.SetActive(true);
+                    view.countText.text = "0x";
                     view.countText.color = mutedTextColor;
                 }
                 if (view.itemNameText != null)
@@ -127,22 +141,6 @@ public class ConsumableHUD : MonoBehaviour
                 }
             }
         }
-    }
-
-    private static int CountMatchingConsumables(IReadOnlyList<ScriptableObject> owned, ConsumableData target)
-    {
-        if (owned == null || target == null) return 1;
-        int count = 0;
-        for (int i = 0; i < owned.Count; i++)
-        {
-            if (owned[i] is ConsumableData cd &&
-                cd.type == target.type &&
-                string.Equals(cd.consumableName, target.consumableName, StringComparison.OrdinalIgnoreCase))
-            {
-                count++;
-            }
-        }
-        return Mathf.Max(1, count);
     }
 
     private static string FormatCoins(int coins)

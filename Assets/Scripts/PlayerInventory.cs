@@ -24,6 +24,9 @@ public class PlayerInventory : MonoBehaviour
     [Tooltip("Secondary equipped weapon (Slot 2). Starts empty until equipped at a Loadout Station.")]
     [SerializeField] private WeaponData secondaryWeapon;
 
+    [Tooltip("Fallback starter pistol granted on respawn if no pistol remains in stash.")]
+    [SerializeField] private WeaponData defaultPistol;
+
     [Header("Equipped Equipment")]
     [Tooltip("Equipped tactical vest.")]
     [SerializeField] private ScriptableObject equippedVest;
@@ -31,10 +34,9 @@ public class PlayerInventory : MonoBehaviour
     [Tooltip("Equipped protective mask.")]
     [SerializeField] private ScriptableObject equippedMask;
 
-    [Header("Equipped Consumables (Reserved for future)")]
+    [Header("Consumables Configuration")]
     [Tooltip("Number of quick-access consumable slots.")]
     [SerializeField] private int consumableSlotCount = 4;
-    [SerializeField] private List<ScriptableObject> equippedConsumables = new List<ScriptableObject>();
 
     [Header("Owned Items / Stash")]
     [Tooltip("List of all weapons owned by the player.")]
@@ -43,8 +45,12 @@ public class PlayerInventory : MonoBehaviour
     [Tooltip("List of all equipment pieces owned by the player (coming soon).")]
     [SerializeField] private List<ScriptableObject> ownedEquipment = new List<ScriptableObject>();
 
-    [Tooltip("List of all consumables owned by the player (coming soon).")]
-    [SerializeField] private List<ScriptableObject> ownedConsumables = new List<ScriptableObject>();
+    [Tooltip("Stacked consumables stored safely in the player's stash.")]
+    [SerializeField] private List<ConsumableStack> stashedConsumables = new List<ConsumableStack>();
+
+    // Legacy serialized fields kept hidden for automatic scene-data migration.
+    [SerializeField, HideInInspector] private List<ScriptableObject> equippedConsumables = new List<ScriptableObject>();
+    [SerializeField, HideInInspector] private List<ScriptableObject> ownedConsumables = new List<ScriptableObject>();
 
     [Header("Currency")]
     [Tooltip("Coins collected by the player.")]
@@ -52,6 +58,8 @@ public class PlayerInventory : MonoBehaviour
     [SerializeField] private int coins = 0;
 
     private WeaponController weaponController;
+    private PlayerActiveInventory activeInventory;
+    private WeaponData cachedPistolTemplate;
 
     public event Action OnInventoryChanged;
     public event Action<int> OnCoinsChanged;
@@ -61,10 +69,11 @@ public class PlayerInventory : MonoBehaviour
     public ScriptableObject EquippedVest => equippedVest;
     public ScriptableObject EquippedMask => equippedMask;
     public int ConsumableSlotCount => consumableSlotCount;
-    public IReadOnlyList<ScriptableObject> EquippedConsumables => equippedConsumables;
+    public PlayerActiveInventory ActiveInventory => activeInventory;
+    public IReadOnlyList<ConsumableStack> StashedConsumables => stashedConsumables;
+    public IReadOnlyList<ConsumableStack> EquippedConsumableStacks => activeInventory != null ? activeInventory.QuickSlots : null;
     public IReadOnlyList<WeaponData> OwnedWeapons => ownedWeapons;
     public IReadOnlyList<ScriptableObject> OwnedEquipment => ownedEquipment;
-    public IReadOnlyList<ScriptableObject> OwnedConsumables => ownedConsumables;
     public int Coins => coins;
 
     private void Awake()
@@ -77,14 +86,101 @@ public class PlayerInventory : MonoBehaviour
         Instance = this;
 
         weaponController = GetComponent<WeaponController>() ?? GetComponentInChildren<WeaponController>();
+        activeInventory = GetComponent<PlayerActiveInventory>() ?? gameObject.AddComponent<PlayerActiveInventory>();
+        activeInventory.OnActiveInventoryChanged += HandleActiveInventoryChanged;
 
-        // Ensure consumable slots list is initialized to the requested count
-        while (equippedConsumables.Count < consumableSlotCount)
+        CacheDefaultPistolTemplate();
+        MigrateLegacyConsumables();
+        InitializeSeparateItemInstances();
+    }
+
+    private void CacheDefaultPistolTemplate()
+    {
+        if (defaultPistol != null)
         {
-            equippedConsumables.Add(null);
+            cachedPistolTemplate = defaultPistol;
+            return;
         }
 
-        InitializeSeparateItemInstances();
+        if (primaryWeapon != null && !primaryWeapon.isRuntimeInstance && primaryWeapon.name.ToLower().Contains("pistol"))
+        {
+            cachedPistolTemplate = primaryWeapon;
+            return;
+        }
+
+        for (int i = 0; i < ownedWeapons.Count; i++)
+        {
+            WeaponData w = ownedWeapons[i];
+            if (w != null && !w.isRuntimeInstance && w.name.ToLower().Contains("pistol"))
+            {
+                cachedPistolTemplate = w;
+                return;
+            }
+        }
+    }
+
+    private WeaponData ResolveDefaultPistolTemplate()
+    {
+        if (defaultPistol != null) return defaultPistol;
+        if (cachedPistolTemplate != null) return cachedPistolTemplate;
+
+        WeaponData[] allWeapons = Resources.FindObjectsOfTypeAll<WeaponData>();
+        for (int i = 0; i < allWeapons.Length; i++)
+        {
+            WeaponData w = allWeapons[i];
+            if (w != null && !w.isRuntimeInstance && w.name.ToLower().Contains("pistol"))
+            {
+                cachedPistolTemplate = w;
+                return w;
+            }
+        }
+        return null;
+    }
+
+    private void OnDestroy()
+    {
+        if (activeInventory != null)
+            activeInventory.OnActiveInventoryChanged -= HandleActiveInventoryChanged;
+
+        if (Instance == this)
+            Instance = null;
+    }
+
+    private void HandleActiveInventoryChanged()
+    {
+        OnInventoryChanged?.Invoke();
+    }
+
+    private void MigrateLegacyConsumables()
+    {
+        if (stashedConsumables.Count == 0 && ownedConsumables != null && ownedConsumables.Count > 0)
+        {
+            for (int i = 0; i < ownedConsumables.Count; i++)
+            {
+                if (ownedConsumables[i] is ConsumableData cd)
+                    AddConsumableToStashInternal(cd, 1);
+            }
+            ownedConsumables.Clear();
+        }
+
+        if (equippedConsumables != null && equippedConsumables.Count > 0 && activeInventory != null)
+        {
+            activeInventory.EnsureQuickSlotCapacity();
+            for (int i = 0; i < equippedConsumables.Count && i < consumableSlotCount; i++)
+            {
+                if (equippedConsumables[i] is ConsumableData cd)
+                {
+                    ConsumableStack slot = activeInventory.GetQuickSlot(i);
+                    if (slot != null && slot.IsEmpty)
+                    {
+                        if (GetStashedConsumableCount(cd) > 0)
+                            RemoveConsumableFromStashInternal(cd, 1);
+                        activeInventory.SetQuickSlotInternal(i, cd, 1);
+                    }
+                }
+            }
+            equippedConsumables.Clear();
+        }
     }
 
     /// <summary>
@@ -131,38 +227,8 @@ public class PlayerInventory : MonoBehaviour
             ownedWeapons.Add(secondaryWeapon);
         }
 
-        // 2. Consumables: instantiate each entry in ownedConsumables as a distinct runtime instance
-        List<ScriptableObject> initialEquippedConsumables = new List<ScriptableObject>(equippedConsumables);
-        bool[] equippedMapped = new bool[initialEquippedConsumables.Count];
-
-        for (int i = 0; i < ownedConsumables.Count; i++)
-        {
-            ScriptableObject original = ownedConsumables[i];
-            if (original == null) continue;
-
-            ScriptableObject instance = EnsureRuntimeScriptableInstance(original, forceNewCopy: true);
-            ownedConsumables[i] = instance;
-
-            for (int s = 0; s < initialEquippedConsumables.Count; s++)
-            {
-                if (!equippedMapped[s] && initialEquippedConsumables[s] == original)
-                {
-                    equippedConsumables[s] = instance;
-                    equippedMapped[s] = true;
-                    break;
-                }
-            }
-        }
-
-        for (int s = 0; s < equippedConsumables.Count; s++)
-        {
-            if (equippedConsumables[s] != null && (s >= equippedMapped.Length || !equippedMapped[s]))
-            {
-                ScriptableObject instance = EnsureRuntimeScriptableInstance(equippedConsumables[s], forceNewCopy: true);
-                equippedConsumables[s] = instance;
-                ownedConsumables.Add(instance);
-            }
-        }
+        // 2. Consumables: normalize stashed stacks (merge stackables, isolate non-stackables)
+        NormalizeStashedConsumables();
 
         // 3. Equipment: instantiate each entry in ownedEquipment as a distinct runtime instance
         ScriptableObject initialVest = equippedVest;
@@ -386,6 +452,39 @@ public class PlayerInventory : MonoBehaviour
     }
 
     /// <summary>
+    /// Handles a weapon looted inside the Darkzone:
+    /// Equips into an empty Primary/Secondary hand slot if available,
+    /// otherwise stores it in the player's Darkzone backpack (not sent to stash until evac).
+    /// </summary>
+    public void AddLootedWeapon(WeaponData weapon)
+    {
+        if (weapon == null) return;
+
+        WeaponData instance = EnsureRuntimeWeaponInstance(weapon, forceNewCopy: true);
+
+        if (primaryWeapon == null)
+        {
+            primaryWeapon = instance;
+            SyncWithWeaponController();
+            OnInventoryChanged?.Invoke();
+        }
+        else if (secondaryWeapon == null && primaryWeapon != instance)
+        {
+            secondaryWeapon = instance;
+            SyncWithWeaponController();
+            OnInventoryChanged?.Invoke();
+        }
+        else if (activeInventory != null)
+        {
+            activeInventory.AddWeaponToBackpack(instance);
+        }
+        else
+        {
+            AddOwnedWeapon(instance);
+        }
+    }
+
+    /// <summary>
     /// Sets the list of all owned weapons (e.g. for initial setup or loading),
     /// ensuring each entry is a separate runtime instance.
     /// </summary>
@@ -517,126 +616,404 @@ public class PlayerInventory : MonoBehaviour
         OnInventoryChanged?.Invoke();
     }
 
-    // ── Consumables API ─────────────────────────────────────────────────
+    // ── Consumables API (Stash + Active Quick-Slot Transfers) ───────────
 
-    /// <summary>
-    /// Checks whether a specific consumable instance is currently equipped in any quick-slot.
-    /// </summary>
-    public bool IsConsumableEquipped(ScriptableObject consumable, out int slotIndex)
+    private void NormalizeStashedConsumables()
     {
-        if (consumable != null && equippedConsumables != null)
+        List<ConsumableStack> normalized = new List<ConsumableStack>();
+        for (int i = 0; i < stashedConsumables.Count; i++)
         {
-            for (int i = 0; i < equippedConsumables.Count; i++)
+            ConsumableStack entry = stashedConsumables[i];
+            if (entry == null || entry.IsEmpty) continue;
+
+            if (entry.item.isStackable)
             {
-                if (equippedConsumables[i] == consumable)
+                ConsumableData template = entry.item.GetTemplate();
+                bool merged = false;
+                for (int j = 0; j < normalized.Count; j++)
                 {
-                    slotIndex = i;
-                    return true;
+                    if (normalized[j].Matches(template))
+                    {
+                        normalized[j].quantity += entry.quantity;
+                        merged = true;
+                        break;
+                    }
+                }
+                if (!merged)
+                    normalized.Add(new ConsumableStack(template, entry.quantity));
+            }
+            else
+            {
+                int count = Mathf.Max(1, entry.quantity);
+                for (int u = 0; u < count; u++)
+                {
+                    bool alreadyUsed = normalized.Exists(x => x.item == entry.item);
+                    ConsumableData instance = EnsureRuntimeConsumableInstance(entry.item, forceNewCopy: u > 0 || alreadyUsed);
+                    normalized.Add(new ConsumableStack(instance, 1));
                 }
             }
         }
+
+        stashedConsumables.Clear();
+        stashedConsumables.AddRange(normalized);
+    }
+
+    /// <summary>
+    /// Checks whether a consumable is currently equipped in any active quick-slot.
+    /// </summary>
+    public bool IsConsumableEquipped(ConsumableData consumable, out int slotIndex)
+    {
+        if (activeInventory != null)
+            return activeInventory.IsConsumableEquipped(consumable, out slotIndex);
+
         slotIndex = -1;
         return false;
     }
 
     /// <summary>
-    /// Adds a consumable to the player's owned items as a separate item instance with its own stats.
-    /// If an equipped quick-slot is currently empty, automatically equips it.
+    /// Returns the total quantity of matching consumable currently stored in the Stash.
     /// </summary>
-    public void AddConsumable(ConsumableData consumable)
+    public int GetStashedConsumableCount(ConsumableData consumable)
     {
-        if (consumable == null) return;
+        if (consumable == null) return 0;
 
-        bool alreadyInStash = ownedConsumables.Contains(consumable);
-        ConsumableData instance = EnsureRuntimeConsumableInstance(consumable, forceNewCopy: alreadyInStash);
-        ownedConsumables.Add(instance);
-
-        // Auto-equip into first empty quick-slot if available
-        for (int i = 0; i < consumableSlotCount; i++)
+        int total = 0;
+        for (int i = 0; i < stashedConsumables.Count; i++)
         {
-            if (i >= equippedConsumables.Count)
-            {
-                equippedConsumables.Add(instance);
-                break;
-            }
-            else if (equippedConsumables[i] == null)
-            {
-                equippedConsumables[i] = instance;
-                break;
-            }
+            ConsumableStack stack = stashedConsumables[i];
+            if (stack != null && !stack.IsEmpty && stack.Matches(consumable))
+                total += stack.quantity;
         }
-
-        OnInventoryChanged?.Invoke();
+        return total;
     }
 
     /// <summary>
-    /// Equips a specific consumable instance into the specified quick-slot (0-3).
-    /// If this instance was already equipped in another quick-slot, swaps the slots.
+    /// Adds a consumable stack directly to the player's safe Stash.
+    /// </summary>
+    public void AddConsumableToStash(ConsumableData consumable, int amount = 1)
+    {
+        if (consumable == null || amount <= 0) return;
+        AddConsumableToStashInternal(consumable, amount);
+        OnInventoryChanged?.Invoke();
+    }
+
+    private void AddConsumableToStashInternal(ConsumableData consumable, int amount)
+    {
+        if (consumable == null || amount <= 0) return;
+
+        if (consumable.isStackable)
+        {
+            ConsumableData template = consumable.GetTemplate();
+            for (int i = 0; i < stashedConsumables.Count; i++)
+            {
+                ConsumableStack stack = stashedConsumables[i];
+                if (stack != null && !stack.IsEmpty && stack.Matches(template))
+                {
+                    stack.quantity += amount;
+                    return;
+                }
+            }
+            stashedConsumables.Add(new ConsumableStack(template, amount));
+        }
+        else
+        {
+            for (int i = 0; i < amount; i++)
+            {
+                ConsumableData instance = (i == 0 && consumable.isRuntimeInstance)
+                    ? consumable
+                    : EnsureRuntimeConsumableInstance(consumable, forceNewCopy: true);
+                stashedConsumables.Add(new ConsumableStack(instance, 1));
+            }
+        }
+    }
+
+    private int RemoveConsumableFromStashInternal(ConsumableData consumable, int maxToRemove)
+    {
+        if (consumable == null || maxToRemove <= 0) return 0;
+
+        int remainingToRemove = maxToRemove;
+        int totalRemoved = 0;
+
+        for (int i = stashedConsumables.Count - 1; i >= 0 && remainingToRemove > 0; i--)
+        {
+            ConsumableStack stack = stashedConsumables[i];
+            if (stack == null || stack.IsEmpty || !stack.Matches(consumable))
+                continue;
+
+            int take = Mathf.Min(stack.quantity, remainingToRemove);
+            stack.quantity -= take;
+            remainingToRemove -= take;
+            totalRemoved += take;
+
+            if (stack.quantity <= 0)
+                stashedConsumables.RemoveAt(i);
+        }
+
+        return totalRemoved;
+    }
+
+    /// <summary>
+    /// Handles a consumable picked up inside the Darkzone:
+    /// Routes to PlayerActiveInventory (adds to equipped quick-slot even above 5, or empty slot, or backpack).
+    /// </summary>
+    public void AddConsumable(ConsumableData consumable, int amount = 1)
+    {
+        if (consumable == null || amount <= 0) return;
+
+        if (activeInventory != null)
+        {
+            activeInventory.AddLootedConsumable(consumable, amount);
+        }
+        else
+        {
+            AddConsumableToStash(consumable, amount);
+        }
+    }
+
+    /// <summary>
+    /// Equips a consumable from the Stash into the specified quick-slot (0-3).
+    /// Enforces single-slot policy: if already equipped in another slot, moves/swaps it there
+    /// and tops up up to maxQuickSlotStack (5) from Stash.
     /// </summary>
     public bool EquipConsumable(ConsumableData consumable, int slotIndex)
     {
-        if (consumable == null || slotIndex < 0 || slotIndex >= consumableSlotCount)
+        if (consumable == null || activeInventory == null || slotIndex < 0 || slotIndex >= consumableSlotCount)
             return false;
 
-        while (equippedConsumables.Count < consumableSlotCount)
-            equippedConsumables.Add(null);
+        activeInventory.EnsureQuickSlotCapacity();
 
-        if (!ownedConsumables.Contains(consumable))
+        int existingSlot = activeInventory.FindEquippedSlotIndex(consumable);
+        if (existingSlot >= 0)
         {
-            consumable = EnsureRuntimeConsumableInstance(consumable, forceNewCopy: false);
-            ownedConsumables.Add(consumable);
-        }
-
-        // If this exact consumable instance is already in another slot, swap it
-        for (int i = 0; i < equippedConsumables.Count; i++)
-        {
-            if (i != slotIndex && equippedConsumables[i] == consumable)
+            if (existingSlot != slotIndex)
             {
-                equippedConsumables[i] = equippedConsumables[slotIndex];
-                break;
+                ConsumableStack src = activeInventory.GetQuickSlot(existingSlot);
+                ConsumableStack dst = activeInventory.GetQuickSlot(slotIndex);
+                ConsumableData dstItem = dst.item;
+                int dstQty = dst.quantity;
+                dst.Set(src.item, src.quantity);
+                src.Set(dstItem, dstQty);
             }
+
+            if (consumable.isStackable)
+            {
+                ConsumableStack target = activeInventory.GetQuickSlot(slotIndex);
+                int room = Mathf.Max(0, target.MaxQuickSlotStack - target.quantity);
+                int avail = GetStashedConsumableCount(consumable);
+                int take = Mathf.Min(room, avail);
+                if (take > 0)
+                {
+                    int removed = RemoveConsumableFromStashInternal(consumable, take);
+                    target.quantity += removed;
+                }
+            }
+
+            activeInventory.NotifyChanged();
+            return true;
         }
 
-        equippedConsumables[slotIndex] = consumable;
-        OnInventoryChanged?.Invoke();
+        int stashAvail = GetStashedConsumableCount(consumable);
+        if (stashAvail <= 0)
+            return false;
+
+        ConsumableStack currentInTarget = activeInventory.GetQuickSlot(slotIndex);
+        if (currentInTarget != null && !currentInTarget.IsEmpty)
+        {
+            AddConsumableToStashInternal(currentInTarget.item, currentInTarget.quantity);
+            currentInTarget.Clear();
+        }
+
+        int maxPerSlot = consumable.isStackable ? Mathf.Max(1, consumable.maxQuickSlotStack) : 1;
+        int toEquip = Mathf.Min(stashAvail, maxPerSlot);
+        int taken = RemoveConsumableFromStashInternal(consumable, toEquip);
+        if (taken <= 0)
+            return false;
+
+        activeInventory.SetQuickSlotInternal(slotIndex, consumable, taken);
+        activeInventory.NotifyChanged();
         return true;
     }
 
     /// <summary>
-    /// Unequips the consumable from the specified quick-slot.
+    /// Swaps or moves two quick-slots in the player's active inventory.
+    /// </summary>
+    public bool SwapConsumableSlots(int fromSlot, int toSlot)
+    {
+        if (activeInventory == null) return false;
+        return activeInventory.SwapOrMoveQuickSlots(fromSlot, toSlot);
+    }
+
+    /// <summary>
+    /// Adjusts a stackable equipped quick-slot's quantity by <paramref name="delta"/> (+1 / -1),
+    /// transferring units between Stash and Active Inventory within [0 .. maxQuickSlotStack].
+    /// </summary>
+    public bool AdjustConsumableSlotQuantity(int slotIndex, int delta)
+    {
+        if (activeInventory == null || delta == 0) return false;
+
+        ConsumableStack slot = activeInventory.GetQuickSlot(slotIndex);
+        if (slot == null || slot.IsEmpty || !slot.IsStackable)
+            return false;
+
+        if (delta > 0)
+        {
+            int room = Mathf.Max(0, slot.MaxQuickSlotStack - slot.quantity);
+            int avail = GetStashedConsumableCount(slot.item);
+            int move = Mathf.Min(delta, room, avail);
+            if (move <= 0) return false;
+
+            int removed = RemoveConsumableFromStashInternal(slot.item, move);
+            if (removed <= 0) return false;
+
+            slot.quantity += removed;
+            activeInventory.NotifyChanged();
+            return true;
+        }
+        else
+        {
+            int move = Mathf.Min(-delta, slot.quantity);
+            if (move <= 0) return false;
+
+            ConsumableData item = slot.item;
+            slot.quantity -= move;
+            if (slot.quantity <= 0)
+                slot.Clear();
+
+            AddConsumableToStashInternal(item, move);
+            activeInventory.NotifyChanged();
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// Unequips the entire stack from the specified quick-slot and returns it to the Stash.
     /// </summary>
     public bool UnequipConsumable(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= equippedConsumables.Count)
+        if (activeInventory == null) return false;
+
+        ConsumableStack slot = activeInventory.GetQuickSlot(slotIndex);
+        if (slot == null || slot.IsEmpty)
             return false;
 
-        equippedConsumables[slotIndex] = null;
-        OnInventoryChanged?.Invoke();
+        ConsumableData item = slot.item;
+        int qty = slot.quantity;
+        slot.Clear();
+
+        AddConsumableToStashInternal(item, qty);
+        activeInventory.NotifyChanged();
         return true;
     }
 
     /// <summary>
-    /// Uses and consumes the individual item in the specified quick-slot.
+    /// Uses and consumes 1 unit from the specified quick-slot.
     /// Returns true if an item was successfully consumed.
     /// </summary>
     public bool ConsumeEquippedSlot(int slotIndex, out ConsumableData consumed)
     {
         consumed = null;
-        if (slotIndex < 0 || slotIndex >= equippedConsumables.Count)
-            return false;
+        if (activeInventory == null) return false;
+        return activeInventory.ConsumeQuickSlot(slotIndex, out consumed);
+    }
 
-        ConsumableData item = equippedConsumables[slotIndex] as ConsumableData;
-        if (item == null)
-            return false;
+    // ── Darkzone Evacuation & Death Lifecycle ───────────────────────────
 
-        consumed = item;
+    /// <summary>
+    /// Called when the player successfully evacuates the Darkzone:
+    /// - Excess consumables above maxQuickSlotStack (5) in quick-slots are moved to Stash.
+    /// - All backpack consumables and backpack weapons are moved to Stash.
+    /// - Held weapons picked up in the zone are registered into ownedWeapons.
+    /// </summary>
+    public void EvacuateFromZone()
+    {
+        if (activeInventory == null) return;
 
-        // Remove this specific consumable instance from owned stash and clear its slot
-        ownedConsumables.Remove(item);
-        equippedConsumables[slotIndex] = null;
+        activeInventory.EnsureQuickSlotCapacity();
 
-        OnInventoryChanged?.Invoke();
-        return true;
+        // 1. Cap quick-slots back down to maxQuickSlotStack and send excess to Stash
+        var quickSlots = activeInventory.QuickSlots;
+        for (int i = 0; i < quickSlots.Count; i++)
+        {
+            ConsumableStack slot = quickSlots[i];
+            if (slot == null || slot.IsEmpty || !slot.IsStackable)
+                continue;
+
+            int cap = slot.MaxQuickSlotStack;
+            if (slot.quantity > cap)
+            {
+                int excess = slot.quantity - cap;
+                slot.quantity = cap;
+                AddConsumableToStashInternal(slot.item, excess);
+            }
+        }
+
+        // 2. Deposit all backpack consumables to Stash
+        var bagConsumables = activeInventory.BackpackConsumables;
+        for (int i = 0; i < bagConsumables.Count; i++)
+        {
+            ConsumableStack bagStack = bagConsumables[i];
+            if (bagStack != null && !bagStack.IsEmpty)
+                AddConsumableToStashInternal(bagStack.item, bagStack.quantity);
+        }
+
+        // 3. Register held weapons and deposit backpack weapons to Stash
+        if (primaryWeapon != null && !ownedWeapons.Contains(primaryWeapon))
+            ownedWeapons.Add(primaryWeapon);
+
+        if (secondaryWeapon != null && !ownedWeapons.Contains(secondaryWeapon))
+            ownedWeapons.Add(secondaryWeapon);
+
+        var bagWeapons = activeInventory.BackpackWeapons;
+        for (int i = 0; i < bagWeapons.Count; i++)
+        {
+            WeaponData w = bagWeapons[i];
+            if (w != null && !ownedWeapons.Contains(w))
+                ownedWeapons.Add(w);
+        }
+
+        activeInventory.ClearBackpackInternal();
+        activeInventory.NotifyChanged();
+    }
+
+    /// <summary>
+    /// Called on player death:
+    /// Loses the entire backpack, all held weapons (Primary & Secondary), and all equipped consumables.
+    /// Grants/equips a pistol so the player always respawns with at least a pistol.
+    /// Items kept safely in Stash remain untouched.
+    /// </summary>
+    public void HandlePlayerDeath()
+    {
+        if (primaryWeapon != null)
+        {
+            ownedWeapons.Remove(primaryWeapon);
+            primaryWeapon = null;
+        }
+
+        if (secondaryWeapon != null)
+        {
+            ownedWeapons.Remove(secondaryWeapon);
+            secondaryWeapon = null;
+        }
+
+        // Ensure player respawns with at least a pistol
+        WeaponData starterPistol = ownedWeapons.Find(w => w != null && w.name.ToLower().Contains("pistol"));
+        if (starterPistol == null)
+        {
+            WeaponData template = ResolveDefaultPistolTemplate();
+            if (template != null)
+            {
+                starterPistol = EnsureRuntimeWeaponInstance(template, forceNewCopy: true);
+                ownedWeapons.Add(starterPistol);
+            }
+        }
+        primaryWeapon = starterPistol;
+
+        SyncWithWeaponController();
+
+        if (activeInventory != null)
+            activeInventory.ClearAllOnDeath();
+        else
+            OnInventoryChanged?.Invoke();
     }
 
     // ── Item Removal API ────────────────────────────────────────────────
@@ -702,25 +1079,40 @@ public class PlayerInventory : MonoBehaviour
     }
 
     /// <summary>
-    /// Removes a consumable from ownedConsumables and clears any quick-slot holding it.
+    /// Removes a specific stashed consumable stack entry from the Stash.
+    /// </summary>
+    public bool RemoveStashedConsumableStack(ConsumableStack stack)
+    {
+        if (stack == null || !stashedConsumables.Remove(stack))
+            return false;
+
+        OnInventoryChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>
+    /// Removes all matching consumables from the Stash (and clears any matching quick-slot).
     /// </summary>
     public bool RemoveConsumable(ConsumableData consumable)
     {
-        if (consumable == null || !ownedConsumables.Contains(consumable))
-            return false;
+        if (consumable == null) return false;
 
-        if (equippedConsumables != null)
+        bool removedAny = RemoveConsumableFromStashInternal(consumable, int.MaxValue) > 0;
+
+        if (activeInventory != null)
         {
-            for (int i = 0; i < equippedConsumables.Count; i++)
+            int slotIndex = activeInventory.FindEquippedSlotIndex(consumable);
+            if (slotIndex >= 0)
             {
-                if (equippedConsumables[i] == consumable)
-                    equippedConsumables[i] = null;
+                activeInventory.SetQuickSlotInternal(slotIndex, null, 0);
+                removedAny = true;
             }
         }
 
-        ownedConsumables.Remove(consumable);
-        OnInventoryChanged?.Invoke();
-        return true;
+        if (removedAny)
+            activeInventory?.NotifyChanged();
+
+        return removedAny;
     }
 
     /// <summary>

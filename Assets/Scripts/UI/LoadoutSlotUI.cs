@@ -44,6 +44,12 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
     [SerializeField] private Button unequipButton;
     [SerializeField] private CanvasGroup canvasGroup;
 
+    [Header("Consumable Stack Controls")]
+    [SerializeField] private GameObject stackControlGroup;
+    [SerializeField] private Button decreaseButton;
+    [SerializeField] private TextMeshProUGUI stackCountText;
+    [SerializeField] private Button increaseButton;
+
     [Header("HUDUI Unified Palette")]
     [SerializeField] private Color emptyBorderColor = new Color(25f / 255f, 28f / 255f, 33f / 255f, 1f);            // #191C21
     [SerializeField] private Color occupiedWeaponBorderColor = new Color(46f / 255f, 52f / 255f, 60f / 255f, 1f);   // #2E343C
@@ -68,6 +74,7 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
     [SerializeField] private InventoryDragController dragController;
 
     private ScriptableObject currentItem;
+    private int currentStackQuantity;
     private bool canUnequipCurrent;
     private bool isDraggingThisSlot;
 
@@ -90,6 +97,59 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
             unequipButton.onClick.RemoveAllListeners();
             unequipButton.onClick.AddListener(UnequipThisSlot);
         }
+
+        if (decreaseButton != null)
+        {
+            decreaseButton.onClick.RemoveAllListeners();
+            decreaseButton.onClick.AddListener(HandleDecreaseClick);
+        }
+
+        if (increaseButton != null)
+        {
+            increaseButton.onClick.RemoveAllListeners();
+            increaseButton.onClick.AddListener(HandleIncreaseClick);
+        }
+    }
+
+    public void BindConsumableStack(ConsumableStack stack, int stashedCount)
+    {
+        ConsumableData item = (stack != null && !stack.IsEmpty) ? stack.item : null;
+        currentStackQuantity = (stack != null && !stack.IsEmpty) ? stack.quantity : 0;
+
+        Bind(item, item != null);
+
+        bool showStackControls = slotKind == SlotKind.Consumable && item != null && item.isStackable;
+        if (stackControlGroup != null)
+            stackControlGroup.SetActive(showStackControls);
+
+        if (showStackControls)
+        {
+            if (stackCountText != null)
+            {
+                stackCountText.text = $"{currentStackQuantity}x";
+                stackCountText.color = activeStatusColor;
+            }
+            bool canDecrease = currentStackQuantity > 0;
+            bool canIncrease = stashedCount > 0 && currentStackQuantity < item.maxQuickSlotStack;
+            SetStackButtonState(decreaseButton, canDecrease);
+            SetStackButtonState(increaseButton, canIncrease);
+        }
+
+        bool showUnequip = item != null && canUnequipCurrent;
+        if (bottomRow != null)
+            bottomRow.SetActive(showStatsRow || showUnequip || showStackControls);
+    }
+
+    private void SetStackButtonState(Button btn, bool enabled)
+    {
+        if (btn == null) return;
+        btn.interactable = enabled;
+        TextMeshProUGUI label = btn.GetComponentInChildren<TextMeshProUGUI>(true);
+        if (label != null)
+            label.color = enabled ? primaryTextColor : mutedTextColor;
+        Image border = btn.GetComponent<Image>();
+        if (border != null)
+            border.color = enabled ? occupiedGearBorderColor : emptyBorderColor;
     }
 
     public void Bind(ScriptableObject item, bool canUnequip)
@@ -195,8 +255,31 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
         if (unequipButton != null)
             unequipButton.gameObject.SetActive(showUnequip);
 
+        if (stackControlGroup != null)
+            stackControlGroup.SetActive(false);
+
         if (bottomRow != null)
             bottomRow.SetActive(showStatsRow || showUnequip);
+    }
+
+    private void HandleDecreaseClick()
+    {
+        if (dragController != null && dragController.IsDragging)
+            return;
+        if (slotKind != SlotKind.Consumable || PlayerInventory.Instance == null)
+            return;
+
+        PlayerInventory.Instance.AdjustConsumableSlotQuantity(slotIndex, -1);
+    }
+
+    private void HandleIncreaseClick()
+    {
+        if (dragController != null && dragController.IsDragging)
+            return;
+        if (slotKind != SlotKind.Consumable || PlayerInventory.Instance == null)
+            return;
+
+        PlayerInventory.Instance.AdjustConsumableSlotQuantity(slotIndex, 1);
     }
 
     private void UpdateStatusBadge(bool occupied)
@@ -366,7 +449,15 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
                 equipped = inv.EquipEquipment(dropped, EquipmentSlotType.Mask);
                 break;
             case SlotKind.Consumable:
-                equipped = inv.EquipConsumable(dropped as ConsumableData, slotIndex);
+                if (dragController.SourceLoadoutSlot != null &&
+                    dragController.SourceLoadoutSlot.Kind == SlotKind.Consumable)
+                {
+                    equipped = inv.SwapConsumableSlots(dragController.SourceLoadoutSlot.SlotIndex, slotIndex);
+                }
+                else
+                {
+                    equipped = inv.EquipConsumable(dropped as ConsumableData, slotIndex);
+                }
                 break;
         }
 
@@ -383,6 +474,17 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
         if (currentItem == null || dragController == null)
             return;
 
+        if (eventData != null && eventData.pointerPress != null)
+        {
+            Transform pressTransform = eventData.pointerPress.transform;
+            if ((unequipButton != null && pressTransform.IsChildOf(unequipButton.transform)) ||
+                (decreaseButton != null && pressTransform.IsChildOf(decreaseButton.transform)) ||
+                (increaseButton != null && pressTransform.IsChildOf(increaseButton.transform)))
+            {
+                return;
+            }
+        }
+
         isDraggingThisSlot = true;
         if (canvasGroup != null)
         {
@@ -393,6 +495,8 @@ public class LoadoutSlotUI : MonoBehaviour, IDropHandler, IPointerClickHandler, 
         Sprite icon = iconImage != null ? iconImage.sprite : null;
         Color iconColor = iconImage != null ? iconImage.color : Color.white;
         string label = nameText != null ? nameText.text : currentItem.name;
+        if (slotKind == SlotKind.Consumable && currentItem is ConsumableData cd && cd.isStackable && currentStackQuantity > 0)
+            label = $"{currentStackQuantity}x {cd.consumableName}";
 
         dragController.BeginDrag(
             currentItem,

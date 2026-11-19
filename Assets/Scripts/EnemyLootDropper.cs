@@ -134,13 +134,13 @@ public class EnemyLootDropper : MonoBehaviour
         ConsumableData chosen = dropPool[Random.Range(0, dropPool.Count)];
         if (chosen == null) return;
 
-        ConsumableData instance = chosen.CreateRuntimeInstance();
+        ConsumableData instance = chosen.isStackable ? chosen.GetTemplate() : chosen.CreateRuntimeInstance();
 
         GameObject pickupObj = new GameObject($"Pickup_{instance.consumableName}");
         pickupObj.transform.position = transform.position;
 
         ConsumablePickup pickup = pickupObj.AddComponent<ConsumablePickup>();
-        pickup.Initialize(instance);
+        pickup.Initialize(instance, 1);
 
         Vector2 randomDir = Random.insideUnitCircle.normalized;
         if (randomDir == Vector2.zero) randomDir = Vector2.up;

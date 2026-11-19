@@ -250,16 +250,19 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
             maskSlot.Bind(inv.EquippedMask, inv.EquippedMask != null);
 
         // Consumables (4 quick slots)
-        var equippedConsumables = inv.EquippedConsumables;
+        var equippedStacks = inv.EquippedConsumableStacks;
         if (consumableSlots != null)
         {
             for (int i = 0; i < consumableSlots.Length; i++)
             {
                 if (consumableSlots[i] == null) continue;
-                ScriptableObject item = (equippedConsumables != null && i < equippedConsumables.Count)
-                    ? equippedConsumables[i]
+                ConsumableStack stack = (equippedStacks != null && i < equippedStacks.Count)
+                    ? equippedStacks[i]
                     : null;
-                consumableSlots[i].Bind(item, item != null);
+                int stashedAvail = (stack != null && !stack.IsEmpty)
+                    ? inv.GetStashedConsumableCount(stack.item)
+                    : 0;
+                consumableSlots[i].BindConsumableStack(stack, stashedAvail);
             }
         }
 
@@ -357,7 +360,18 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
     {
         SetTabLabel(TabCategory.Weapons, "WEAPONS", CountOf(inv.OwnedWeapons));
         SetTabLabel(TabCategory.Equipment, "EQUIPMENT", CountOf(inv.OwnedEquipment));
-        SetTabLabel(TabCategory.Consumables, "CONSUMABLES", CountOf(inv.OwnedConsumables));
+        SetTabLabel(TabCategory.Consumables, "CONSUMABLES", CountOfStacks(inv.StashedConsumables));
+    }
+
+    private static int CountOfStacks(IReadOnlyList<ConsumableStack> list)
+    {
+        if (list == null) return 0;
+        int n = 0;
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i] != null && !list[i].IsEmpty) n++;
+        }
+        return n;
     }
 
     private static int CountOf<T>(IReadOnlyList<T> list) where T : class
@@ -429,13 +443,14 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
         }
         else if (currentTab == TabCategory.Consumables)
         {
-            IReadOnlyList<ScriptableObject> consumables = inv.OwnedConsumables;
+            IReadOnlyList<ConsumableStack> consumables = inv.StashedConsumables;
             if (consumables != null)
             {
                 for (int i = 0; i < consumables.Count; i++)
                 {
-                    if (consumables[i] == null) continue;
-                    SpawnItemCard(consumables[i], inv);
+                    ConsumableStack stack = consumables[i];
+                    if (stack == null || stack.IsEmpty) continue;
+                    SpawnConsumableCard(stack, inv);
                     spawnedCount++;
                 }
             }
@@ -448,6 +463,14 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
         InventoryItemSlotUI card = Instantiate(inventoryItemSlotPrefab, inventoryContentRoot);
         card.name = $"ItemCard_{item.name}";
         card.Bind(item, inv, dragController);
+        spawnedItemRows.Add(card.gameObject);
+    }
+
+    private void SpawnConsumableCard(ConsumableStack stack, PlayerInventory inv)
+    {
+        InventoryItemSlotUI card = Instantiate(inventoryItemSlotPrefab, inventoryContentRoot);
+        card.name = $"ItemCard_{stack.item.name}";
+        card.BindConsumableStack(stack, inv, dragController);
         spawnedItemRows.Add(card.gameObject);
     }
 

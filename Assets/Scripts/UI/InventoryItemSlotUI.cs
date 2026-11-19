@@ -20,6 +20,8 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
     [SerializeField] private TextMeshProUGUI statsText;
 
     [Header("Item Actions")]
+    [SerializeField] private GameObject stackBadge;
+    [SerializeField] private TextMeshProUGUI stackCountText;
     [SerializeField] private GameObject equippedBadge;
     [SerializeField] private Image equippedBadgeBorder;
     [SerializeField] private Image equippedBadgeBg;
@@ -38,6 +40,7 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
     [SerializeField] private Color activeBadgeBorderColor = new Color(22f / 255f, 101f / 255f, 52f / 255f, 1f); // #166534
 
     private ScriptableObject itemData;
+    private ConsumableStack boundStack;
     private PlayerInventory inventory;
     private InventoryDragController dragController;
     private bool isEquipped;
@@ -67,6 +70,18 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
 
     public void Bind(ScriptableObject item, PlayerInventory inv, InventoryDragController dragCtrl)
     {
+        boundStack = null;
+        BindInternal(item, inv, dragCtrl);
+    }
+
+    public void BindConsumableStack(ConsumableStack stack, PlayerInventory inv, InventoryDragController dragCtrl)
+    {
+        boundStack = stack;
+        BindInternal(stack != null ? stack.item : null, inv, dragCtrl);
+    }
+
+    private void BindInternal(ScriptableObject item, PlayerInventory inv, InventoryDragController dragCtrl)
+    {
         itemData = item;
         inventory = inv;
         dragController = dragCtrl;
@@ -77,6 +92,8 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
         isEquipped = false;
         canUnequip = false;
         string badgeLabel = "";
+        bool showStackBadge = false;
+        string stackLabel = "";
 
         if (item is WeaponData weapon)
         {
@@ -105,11 +122,14 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
         }
         else if (item is ConsumableData consumable)
         {
-            isEquipped = inv.IsConsumableEquipped(consumable, out int consumableSlot);
-            if (isEquipped)
+            isEquipped = false;
+            canUnequip = false;
+
+            if (consumable.isStackable)
             {
-                badgeLabel = $"SLOT {consumableSlot + 1} · ACTIVE";
-                canUnequip = true;
+                int qty = boundStack != null ? boundStack.quantity : inv.GetStashedConsumableCount(consumable);
+                showStackBadge = true;
+                stackLabel = $"{qty}x";
             }
 
             if (iconImage != null)
@@ -149,6 +169,11 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
 
         if (innerImage != null)
             innerImage.color = cardFillColor;
+
+        if (stackBadge != null)
+            stackBadge.SetActive(showStackBadge);
+        if (showStackBadge && stackCountText != null)
+            stackCountText.text = stackLabel;
 
         if (equippedBadge != null)
             equippedBadge.SetActive(isEquipped);
@@ -200,7 +225,16 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
 
     private void HandleTrashClick()
     {
-        if (itemData == null || inventory == null)
+        if (inventory == null)
+            return;
+
+        if (boundStack != null && itemData is ConsumableData)
+        {
+            inventory.RemoveStashedConsumableStack(boundStack);
+            return;
+        }
+
+        if (itemData == null)
             return;
 
         inventory.RemoveItem(itemData);
@@ -222,12 +256,24 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
         }
         else if (itemData is ConsumableData consumable)
         {
-            for (int s = 0; s < inventory.ConsumableSlotCount; s++)
+            PlayerActiveInventory activeInv = inventory.ActiveInventory;
+            if (activeInv != null)
             {
-                if (s >= inventory.EquippedConsumables.Count || inventory.EquippedConsumables[s] == null)
+                int existingSlot = activeInv.FindEquippedSlotIndex(consumable);
+                if (existingSlot >= 0)
                 {
-                    inventory.EquipConsumable(consumable, s);
+                    inventory.EquipConsumable(consumable, existingSlot);
                     return;
+                }
+
+                var quickSlots = activeInv.QuickSlots;
+                for (int s = 0; s < inventory.ConsumableSlotCount; s++)
+                {
+                    if (s >= quickSlots.Count || quickSlots[s] == null || quickSlots[s].IsEmpty)
+                    {
+                        inventory.EquipConsumable(consumable, s);
+                        return;
+                    }
                 }
             }
             inventory.EquipConsumable(consumable, 0);
@@ -277,6 +323,8 @@ public class InventoryItemSlotUI : MonoBehaviour, IPointerClickHandler, IBeginDr
         Sprite icon = iconImage != null ? iconImage.sprite : null;
         Color iconColor = iconImage != null ? iconImage.color : Color.white;
         string label = titleText != null ? titleText.text : itemData.name;
+        if (itemData is ConsumableData cd && cd.isStackable && boundStack != null)
+            label = $"{boundStack.quantity}x {cd.consumableName}";
 
         dragController.BeginDrag(
             itemData,

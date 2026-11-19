@@ -301,7 +301,7 @@ public static class HUDUISetupBuilder
             slotLabel.characterSpacing = 4f;
             SetLE(slotLabel.gameObject, 0f, 15f, 1f, 0f);
 
-            TextMeshProUGUI countText = NewText("ItemCount", header, "x0", 10f, TextMuted, TextAlignmentOptions.MidlineRight, assets.monoSemiBold);
+            TextMeshProUGUI countText = NewText("ItemCount", header, "0x", 10f, TextMuted, TextAlignmentOptions.MidlineRight, assets.monoSemiBold);
             countText.overflowMode = TextOverflowModes.Overflow;
             SetLE(countText.gameObject, -1f, 15f, 0f, 0f);
 
@@ -658,7 +658,7 @@ public static class HUDUISetupBuilder
 
             kTxt.text = keys[i];
             lblTxt.text = $"SLOT {i + 1} [{keys[i]}]";
-            cntTxt.text = "x0";
+            cntTxt.text = "0x";
             nmTxt.text = "EMPTY";
 
             views[i] = new ConsumableHUD.ConsumableSlotView
@@ -776,9 +776,10 @@ public static class HUDUISetupBuilder
         RectTransform promptBorder = NewRect("InteractionPrompt", hudRoot);
         promptBorder.anchorMin = new Vector2(0.5f, 0.5f);
         promptBorder.anchorMax = new Vector2(0.5f, 0.5f);
-        promptBorder.pivot = new Vector2(0.5f, 0f);
+        promptBorder.pivot = new Vector2(0f, 0f);
         promptBorder.anchoredPosition = Vector2.zero;
         AddRoundedImage(promptBorder.gameObject, assets.rounded4Px, BorderSubtle);
+        promptBorder.gameObject.AddComponent<RectMask2D>();
 
         CanvasGroup cg = promptBorder.gameObject.AddComponent<CanvasGroup>();
         cg.alpha = 0f;

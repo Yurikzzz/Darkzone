@@ -96,12 +96,14 @@ public class LootChest : MonoBehaviour
     private bool isOpening;
     private bool isOpened;
     private Transform playerTransform;
+    private PlayerHealth playerHealth;
     private InteractionPromptUI promptUI;
     private EvacTimerUI openTimer;
     private SpriteRenderer chestRenderer;
     private Color originalChestColor = Color.white;
     private GameObject activePopupObj;
     private GameObject activeConsumablePopupObj;
+    private Coroutine lootDropCoroutine;
     private static Sprite radialGlowSprite;
     private static readonly Dictionary<Sprite, Sprite> silhouetteBorderCache = new Dictionary<Sprite, Sprite>();
 
@@ -263,9 +265,29 @@ public class LootChest : MonoBehaviour
         }
     }
 
+    private bool IsPlayerAlive()
+    {
+        if (playerHealth == null && playerTransform != null)
+            playerHealth = playerTransform.GetComponent<PlayerHealth>();
+        if (playerHealth == null)
+        {
+            GameObject playerObj = GameObject.FindWithTag("Player");
+            if (playerObj != null)
+                playerHealth = playerObj.GetComponent<PlayerHealth>();
+        }
+        return playerHealth == null || playerHealth.IsAlive;
+    }
+
     private void Update()
     {
         if (!playerInRange || isOpened) return;
+
+        if (!IsPlayerAlive())
+        {
+            if (isOpening)
+                CancelOpening();
+            return;
+        }
 
         if (Input.GetKeyDown(interactKey))
         {
@@ -327,7 +349,11 @@ public class LootChest : MonoBehaviour
 
     private void HandleOpenTimerComplete()
     {
-        if (!playerInRange || isOpened) return;
+        if (!playerInRange || isOpened || !IsPlayerAlive())
+        {
+            CancelOpening();
+            return;
+        }
 
         OpenChest();
     }
@@ -362,7 +388,9 @@ public class LootChest : MonoBehaviour
         LootRarity rarity = DetermineRarity();
         ConsumableData consumableLoot = SelectRandomConsumable();
 
-        StartCoroutine(AnimateLootDrop(loot, rarity, consumableLoot));
+        if (lootDropCoroutine != null)
+            StopCoroutine(lootDropCoroutine);
+        lootDropCoroutine = StartCoroutine(AnimateLootDrop(loot, rarity, consumableLoot));
     }
 
     private ConsumableData SelectRandomConsumable()
@@ -378,7 +406,8 @@ public class LootChest : MonoBehaviour
         if (availableConsumables != null && availableConsumables.Count > 0)
         {
             ConsumableData template = availableConsumables[Random.Range(0, availableConsumables.Count)];
-            return template != null ? template.CreateRuntimeInstance() : null;
+            if (template == null) return null;
+            return template.isStackable ? template.GetTemplate() : template.CreateRuntimeInstance();
         }
 
         return null;
@@ -613,19 +642,19 @@ public class LootChest : MonoBehaviour
             yield return null;
         }
 
-        // --- Phase 4: Delivery into Player Inventory ---
-        if (PlayerInventory.Instance != null)
+        // --- Phase 4: Delivery into Player Active Inventory (On-Person / Backpack) ---
+        if (IsPlayerAlive() && PlayerInventory.Instance != null)
         {
             if (weapon != null)
             {
-                PlayerInventory.Instance.AddOwnedWeapon(weapon);
-                Debug.Log($"[LootChest] Added {weapon.weaponName} ({rarity}) to player inventory!");
+                PlayerInventory.Instance.AddLootedWeapon(weapon);
+                Debug.Log($"[LootChest] Looted {weapon.weaponName} ({rarity}) onto player/backpack!");
             }
 
             if (consumable != null)
             {
                 PlayerInventory.Instance.AddConsumable(consumable);
-                Debug.Log($"[LootChest] Added {consumable.consumableName} to player inventory!");
+                Debug.Log($"[LootChest] Looted {consumable.consumableName} onto player/backpack!");
             }
         }
 
@@ -640,6 +669,36 @@ public class LootChest : MonoBehaviour
             Destroy(activeConsumablePopupObj);
             activeConsumablePopupObj = null;
         }
+
+        lootDropCoroutine = null;
+    }
+
+    /// <summary>
+    /// Immediately cancels any active chest opening timer or in-flight loot drop animation (e.g. on player death).
+    /// </summary>
+    public void AbortActiveSequence()
+    {
+        if (lootDropCoroutine != null)
+        {
+            StopCoroutine(lootDropCoroutine);
+            lootDropCoroutine = null;
+        }
+
+        if (activePopupObj != null)
+        {
+            if (Application.isPlaying) Destroy(activePopupObj);
+            else DestroyImmediate(activePopupObj);
+            activePopupObj = null;
+        }
+
+        if (activeConsumablePopupObj != null)
+        {
+            if (Application.isPlaying) Destroy(activeConsumablePopupObj);
+            else DestroyImmediate(activeConsumablePopupObj);
+            activeConsumablePopupObj = null;
+        }
+
+        CancelOpening();
     }
 
     /// <summary>
@@ -647,7 +706,7 @@ public class LootChest : MonoBehaviour
     /// </summary>
     public void ResetChest()
     {
-        CancelOpening();
+        AbortActiveSequence();
 
         if (activePopupObj != null)
         {

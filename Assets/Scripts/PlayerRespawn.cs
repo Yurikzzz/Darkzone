@@ -91,6 +91,7 @@ public class PlayerRespawn : MonoBehaviour
     private void HandleDeath()
     {
         if (isRespawning) return;
+        DarkzoneManager.Instance?.CancelAllZoneActions();
         StartCoroutine(RespawnSequence());
     }
 
@@ -150,6 +151,12 @@ public class PlayerRespawn : MonoBehaviour
         if (DarkzoneManager.Instance != null)
         {
             DarkzoneManager.Instance.ResetZone();
+        }
+
+        // Lose backpack, held weapons, and equipped consumables on death (Stash remains safe)
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.HandlePlayerDeath();
         }
 
         // Reset player health

@@ -59,6 +59,26 @@ public class DarkzoneManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Cancels all in-progress timed actions, chest openings, and loot drop sequences in the zone (e.g. on player death).
+    /// </summary>
+    public void CancelAllZoneActions()
+    {
+        EvacTimerUI[] timers = FindObjectsByType<EvacTimerUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var timer in timers)
+        {
+            if (timer != null && timer.IsRunning)
+                timer.CancelTimer();
+        }
+
+        LootChest[] chests = FindObjectsByType<LootChest>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var chest in chests)
+        {
+            if (chest != null)
+                chest.AbortActiveSequence();
+        }
+    }
+
+    /// <summary>
     /// Resets the entire Darkzone back to its pristine state:
     /// despawns all active enemies, resets all enemy spawners, and clears leftover projectiles.
     /// </summary>

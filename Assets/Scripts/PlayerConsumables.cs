@@ -74,24 +74,25 @@ public class PlayerConsumables : MonoBehaviour
     /// </summary>
     public bool UseSlot(int slotIndex)
     {
-        if (Time.time < lastUseTime + globalCooldown) return false;
-
         if (inventory == null)
             inventory = GetComponent<PlayerInventory>() ?? PlayerInventory.Instance;
-        if (inventory == null) return false;
 
-        var equipped = inventory.EquippedConsumables;
-        if (slotIndex < 0 || slotIndex >= equipped.Count) return false;
+        PlayerActiveInventory activeInv = inventory != null ? inventory.ActiveInventory : PlayerActiveInventory.Instance;
+        if (activeInv == null) return false;
 
-        ConsumableData item = equipped[slotIndex] as ConsumableData;
-        if (item == null) return false;
+        ConsumableStack slot = activeInv.GetQuickSlot(slotIndex);
+        if (slot == null || slot.IsEmpty) return false;
+
+        ConsumableData item = slot.item;
+        float cd = Mathf.Max(globalCooldown, item.cooldown);
+        if (Time.time < lastUseTime + cd) return false;
 
         // Execute behavior
         bool success = ExecuteConsumableEffect(item);
         if (success)
         {
             lastUseTime = Time.time;
-            inventory.ConsumeEquippedSlot(slotIndex, out _);
+            activeInv.ConsumeQuickSlot(slotIndex, out _);
             return true;
         }
 
@@ -105,13 +106,15 @@ public class PlayerConsumables : MonoBehaviour
     {
         if (inventory == null)
             inventory = GetComponent<PlayerInventory>() ?? PlayerInventory.Instance;
-        if (inventory == null) return false;
 
-        var equipped = inventory.EquippedConsumables;
-        for (int i = 0; i < equipped.Count; i++)
+        PlayerActiveInventory activeInv = inventory != null ? inventory.ActiveInventory : PlayerActiveInventory.Instance;
+        if (activeInv == null) return false;
+
+        var quickSlots = activeInv.QuickSlots;
+        for (int i = 0; i < quickSlots.Count; i++)
         {
-            ConsumableData item = equipped[i] as ConsumableData;
-            if (item != null && item.type == type)
+            ConsumableStack slot = quickSlots[i];
+            if (slot != null && !slot.IsEmpty && slot.item.type == type)
             {
                 return UseSlot(i);
             }

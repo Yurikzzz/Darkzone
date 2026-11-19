@@ -14,6 +14,10 @@ public class ConsumablePickup : MonoBehaviour
     [Tooltip("The consumable data granted when collected.")]
     [SerializeField] private ConsumableData consumableData;
 
+    [Tooltip("Number of units granted when collected.")]
+    [Min(1)]
+    [SerializeField] private int amount = 1;
+
     [Tooltip("Trigger radius for collecting the item.")]
     [SerializeField] private float pickupRadius = 0.85f;
 
@@ -31,10 +35,12 @@ public class ConsumablePickup : MonoBehaviour
     private float aliveTime;
 
     public ConsumableData Consumable => consumableData;
+    public int Amount => amount;
 
-    public void Initialize(ConsumableData data)
+    public void Initialize(ConsumableData data, int quantity = 1)
     {
         consumableData = data;
+        amount = Mathf.Max(1, quantity);
         UpdateVisuals();
     }
 
@@ -95,7 +101,8 @@ public class ConsumablePickup : MonoBehaviour
         if (labelText != null)
         {
             string colorHex = ColorUtility.ToHtmlStringRGB(consumableData.tintColor);
-            labelText.text = $"<color=#{colorHex}><b>{consumableData.consumableName}</b></color>";
+            string prefix = (consumableData.isStackable && amount > 1) ? $"{amount}x " : "";
+            labelText.text = $"<color=#{colorHex}><b>{prefix}{consumableData.consumableName}</b></color>";
         }
     }
 
@@ -147,8 +154,13 @@ public class ConsumablePickup : MonoBehaviour
 
         if (PlayerInventory.Instance != null)
         {
-            PlayerInventory.Instance.AddConsumable(consumableData);
-            Debug.Log($"[ConsumablePickup] Collected {consumableData.consumableName}!");
+            PlayerInventory.Instance.AddConsumable(consumableData, amount);
+            Debug.Log($"[ConsumablePickup] Collected {amount}x {consumableData.consumableName}!");
+        }
+        else if (PlayerActiveInventory.Instance != null)
+        {
+            PlayerActiveInventory.Instance.AddLootedConsumable(consumableData, amount);
+            Debug.Log($"[ConsumablePickup] Collected {amount}x {consumableData.consumableName}!");
         }
 
         StartCoroutine(CollectAnimation(player.transform));

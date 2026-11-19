@@ -474,10 +474,38 @@ public static class LoadoutUISetupBuilder
             TextMeshProUGUI statsText = NewText("StatsText", info, "DMG 18  •  MAG 12  •  SEMI", 11f, TextSecondary, TextAlignmentOptions.MidlineLeft, assets.monoRegular);
             SetLE(statsText.gameObject, 0f, 16f, 1f, 0f);
 
-            // Right Item Actions (Equipped Slot Badge + Unequip Button + Trash Button)
+            // Right Item Actions (Stack Count Badge + Equipped Slot Badge + Unequip Button + Trash Button)
             RectTransform actions = NewRect("ItemActions", inner);
             SetLE(actions.gameObject, -1f, 28f, 0f, 0f);
             AddLayout(actions.gameObject, false, 8f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleRight);
+
+            // Stack Count Badge (for stackable consumables in stash)
+            RectTransform stackBadgeBorder = NewRect("StackBadge", actions);
+            AddRoundedImage(stackBadgeBorder.gameObject, assets.rounded3Px, BorderMedium);
+            SetLE(stackBadgeBorder.gameObject, -1f, 26f, 0f, 0f);
+
+            RectTransform stackBadgeBg = NewRect("Fill", stackBadgeBorder);
+            Stretch(stackBadgeBg, 1f, 1f, 1f, 1f);
+            AddRoundedImage(stackBadgeBg.gameObject, assets.rounded3Px, BgWell);
+            LayoutElement stackBgIgnore = stackBadgeBg.gameObject.AddComponent<LayoutElement>();
+            stackBgIgnore.ignoreLayout = true;
+
+            HorizontalLayoutGroup stackBadgeLayout = stackBadgeBorder.gameObject.AddComponent<HorizontalLayoutGroup>();
+            stackBadgeLayout.padding = new RectOffset(10, 10, 4, 4);
+            stackBadgeLayout.spacing = 4f;
+            stackBadgeLayout.childAlignment = TextAnchor.MiddleCenter;
+            stackBadgeLayout.childControlWidth = true;
+            stackBadgeLayout.childControlHeight = true;
+            stackBadgeLayout.childForceExpandWidth = false;
+            stackBadgeLayout.childForceExpandHeight = false;
+            ContentSizeFitter stackBadgeFitter = stackBadgeBorder.gameObject.AddComponent<ContentSizeFitter>();
+            stackBadgeFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            stackBadgeFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            TextMeshProUGUI stackCountText = NewText("CountText", stackBadgeBorder, "1x", 11f, StatusActive, TextAlignmentOptions.Center, assets.monoSemiBold);
+            stackCountText.characterSpacing = 3f;
+            SetLE(stackCountText.gameObject, -1f, 16f, 0f, 0f);
+            stackBadgeBorder.gameObject.SetActive(false);
 
             // Equipped Slot Badge
             RectTransform badgeBorder = NewRect("EquippedBadge", actions);
@@ -541,6 +569,8 @@ public static class LoadoutUISetupBuilder
             so.FindProperty("iconImage").objectReferenceValue = iconImg;
             so.FindProperty("titleText").objectReferenceValue = titleText;
             so.FindProperty("statsText").objectReferenceValue = statsText;
+            so.FindProperty("stackBadge").objectReferenceValue = stackBadgeBorder.gameObject;
+            so.FindProperty("stackCountText").objectReferenceValue = stackCountText;
             so.FindProperty("equippedBadge").objectReferenceValue = badgeBorder.gameObject;
             so.FindProperty("equippedBadgeBorder").objectReferenceValue = badgeBorderImg;
             so.FindProperty("equippedBadgeBg").objectReferenceValue = badgeBgImg;
@@ -672,13 +702,43 @@ public static class LoadoutUISetupBuilder
             TextMeshProUGUI nameText = NewText("NameText", info, "EMPTY", 15f, TextMuted, TextAlignmentOptions.MidlineLeft, assets.uiSemiBold);
             SetLE(nameText.gameObject, 0f, 20f, 1f, 0f);
 
-            // Bottom Row: StatsText + Unequip Button
+            // Bottom Row: StatsText / StackControlGroup + Spacer + Unequip Button
             RectTransform bottomRow = NewRect("BottomRow", info);
             SetLE(bottomRow.gameObject, 0f, 22f, 1f, 0f);
-            AddLayout(bottomRow.gameObject, false, 8f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleLeft);
+            AddLayout(bottomRow.gameObject, false, 6f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleLeft);
 
             TextMeshProUGUI statsText = NewText("StatsText", bottomRow, "No weapon equipped", 11f, TextDim, TextAlignmentOptions.MidlineLeft, assets.monoRegular);
             SetLE(statsText.gameObject, 0f, 18f, 1f, 0f);
+
+            // Stack Controls (used by stackable consumable slots: [-] [3x] [+])
+            RectTransform stackCtrl = NewRect("StackControlGroup", bottomRow);
+            SetLE(stackCtrl.gameObject, -1f, 18f, 0f, 0f);
+            AddLayout(stackCtrl.gameObject, false, 4f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleLeft);
+            ContentSizeFitter stackCtrlFitter = stackCtrl.gameObject.AddComponent<ContentSizeFitter>();
+            stackCtrlFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            stackCtrlFitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+            Button decreaseBtn = CreateSquareTextButton(
+                "DecreaseButton", stackCtrl, "-",
+                BgWell, BorderMedium, TextPrimary,
+                11f, assets.monoSemiBold, assets.rounded3Px,
+                20f, 18f);
+
+            TextMeshProUGUI stackCountTxt = NewText("StackCountText", stackCtrl, "1x", 10f, StatusActive, TextAlignmentOptions.Center, assets.monoSemiBold);
+            stackCountTxt.overflowMode = TextOverflowModes.Overflow;
+            SetLE(stackCountTxt.gameObject, 24f, 18f, 0f, 0f);
+
+            Button increaseBtn = CreateSquareTextButton(
+                "IncreaseButton", stackCtrl, "+",
+                BgWell, BorderMedium, TextPrimary,
+                11f, assets.monoSemiBold, assets.rounded3Px,
+                20f, 18f);
+
+            stackCtrl.gameObject.SetActive(false);
+
+            RectTransform flexSpacer = NewRect("FlexSpacer", bottomRow);
+            SetLE(flexSpacer.gameObject, 0f, 1f, 1f, 0f);
+            flexSpacer.gameObject.SetActive(false);
 
             Button unequipBtn = CreateMinimalButton(
                 "UnequipButton", bottomRow, "UNEQUIP",
@@ -710,6 +770,10 @@ public static class LoadoutUISetupBuilder
             so.FindProperty("showStatsRow").boolValue = true;
             so.FindProperty("unequipButton").objectReferenceValue = unequipBtn;
             so.FindProperty("canvasGroup").objectReferenceValue = cg;
+            so.FindProperty("stackControlGroup").objectReferenceValue = stackCtrl.gameObject;
+            so.FindProperty("decreaseButton").objectReferenceValue = decreaseBtn;
+            so.FindProperty("stackCountText").objectReferenceValue = stackCountTxt;
+            so.FindProperty("increaseButton").objectReferenceValue = increaseBtn;
             so.ApplyModifiedPropertiesWithoutUndo();
 
             GameObject saved = PrefabUtility.SaveAsPrefabAsset(root, LoadoutSlotPrefabPath);
@@ -889,9 +953,9 @@ public static class LoadoutUISetupBuilder
         SectionHeaderRow(consumablesSection, "03 // CONSUMABLES", assets);
 
         RectTransform consumablesGrid = NewRect("ConsumablesGrid", consumablesSection);
-        SetLE(consumablesGrid.gameObject, 0f, 176f, 1f, 0f);
+        SetLE(consumablesGrid.gameObject, 0f, 188f, 1f, 0f);
         GridLayoutGroup grid = consumablesGrid.gameObject.AddComponent<GridLayoutGroup>();
-        grid.cellSize = new Vector2(239f, 82f);
+        grid.cellSize = new Vector2(239f, 88f);
         grid.spacing = new Vector2(12f, 12f);
         grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
         grid.constraintCount = 2;
@@ -905,7 +969,7 @@ public static class LoadoutUISetupBuilder
                 loadoutSlotPrefab, consumablesGrid, $"ConsumableSlot_{i + 1}",
                 LoadoutSlotUI.SlotKind.Consumable, i,
                 $"SLOT {i + 1} [{consumableKeys[i]}]", null, consumableKeys[i],
-                dragCtrl, 82f, 44f, 44f, false, false, true, assets);
+                dragCtrl, 88f, 44f, 44f, false, false, true, assets);
         }
 
         // Column Divider (1px)
@@ -1353,13 +1417,21 @@ public static class LoadoutUISetupBuilder
                     if (statsTrans != null)
                         statsTrans.gameObject.SetActive(showStats);
 
+                    Transform spacerTrans = bottomRow.Find("FlexSpacer");
+                    if (spacerTrans != null)
+                        spacerTrans.gameObject.SetActive(!showStats);
+
                     Transform unequipTrans = bottomRow.Find("UnequipButton");
                     if (compactBadgeTextOnly)
                     {
                         SetLE(bottomRow.gameObject, 0f, 18f, 1f, 0f);
                         bottomRow.gameObject.SetActive(false);
                         HorizontalLayoutGroup brHlg = bottomRow.GetComponent<HorizontalLayoutGroup>();
-                        if (brHlg != null) brHlg.childAlignment = TextAnchor.MiddleRight;
+                        if (brHlg != null)
+                        {
+                            brHlg.childAlignment = TextAnchor.MiddleLeft;
+                            brHlg.spacing = 4f;
+                        }
                         if (unequipTrans != null)
                         {
                             SetLE(unequipTrans.gameObject, -1f, 18f, 0f, 0f);
@@ -1546,6 +1618,45 @@ public static class LoadoutUISetupBuilder
         iconImg.color = iconColor;
         iconImg.preserveAspect = true;
         iconImg.raycastTarget = false;
+
+        return btn;
+    }
+
+    private static Button CreateSquareTextButton(
+        string name,
+        Transform parent,
+        string label,
+        Color bgColor,
+        Color borderColor,
+        Color textColor,
+        float fontSize,
+        TMP_FontAsset font,
+        Sprite roundedSprite,
+        float width,
+        float height)
+    {
+        RectTransform outer = NewRect(name, parent);
+        AddRoundedImage(outer.gameObject, roundedSprite, borderColor);
+        SetLE(outer.gameObject, width, height, 0f, 0f);
+
+        RectTransform fill = NewRect("Fill", outer);
+        Stretch(fill, 1f, 1f, 1f, 1f);
+        Image fillImg = AddRoundedImage(fill.gameObject, roundedSprite, bgColor);
+
+        Button btn = outer.gameObject.AddComponent<Button>();
+        btn.targetGraphic = fillImg;
+        btn.transition = Selectable.Transition.ColorTint;
+        btn.navigation = new Navigation { mode = Navigation.Mode.None };
+        ColorBlock cb = btn.colors;
+        cb.normalColor = Color.white;
+        cb.highlightedColor = new Color(1.35f, 1.35f, 1.35f, 1f);
+        cb.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+        cb.disabledColor = new Color(0.45f, 0.45f, 0.45f, 0.45f);
+        btn.colors = cb;
+
+        TextMeshProUGUI txt = NewText("Label", fill, label, fontSize, textColor, TextAlignmentOptions.Center, font);
+        txt.overflowMode = TextOverflowModes.Overflow;
+        Stretch(txt.rectTransform);
 
         return btn;
     }

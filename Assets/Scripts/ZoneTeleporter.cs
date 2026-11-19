@@ -144,7 +144,12 @@ public class ZoneTeleporter : MonoBehaviour
             ApplyDefaultPrompt();
         }
 
-        // Only teleport if the player is still in range
+        GameObject player = GameObject.FindWithTag("Player");
+        PlayerHealth health = player != null ? player.GetComponent<PlayerHealth>() : null;
+        if (health != null && !health.IsAlive)
+            return;
+
+        // Only teleport if the player is still in range and alive
         if (playerInRange)
             StartCoroutine(TeleportSequence());
     }
@@ -245,6 +250,12 @@ public class ZoneTeleporter : MonoBehaviour
             anim.ResetAnimationState();
         }
 
-        Debug.Log("[Darkzone] Player evacuated! Health and ammo reset to full.");
+        // Extract backpack loot & send excess consumables (>5) to Stash
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.EvacuateFromZone();
+        }
+
+        Debug.Log("[Darkzone] Player evacuated! Health, ammo, and extracted loot updated.");
     }
 }
