@@ -39,6 +39,16 @@ public class ZoneTeleporter : MonoBehaviour
 
     // ────────────────────────────────────────────────────────────────────
 
+    private void ApplyDefaultPrompt()
+    {
+        if (prompt == null) return;
+
+        if (type == TeleporterType.EnterZone)
+            prompt.SetPrompt(interactKey, "ENTER // ZONE", "DARKZONE");
+        else
+            prompt.SetPrompt(interactKey, "EVACUATE // ZONE", "EVACUATION");
+    }
+
     private void Awake()
     {
         // Set up the interaction prompt (auto-shows when player is in range)
@@ -46,9 +56,7 @@ public class ZoneTeleporter : MonoBehaviour
         if (prompt == null)
             prompt = gameObject.AddComponent<InteractionPromptUI>();
 
-        prompt.PromptText = type == TeleporterType.EnterZone
-            ? $"[{interactKey}] Enter Darkzone"
-            : $"[{interactKey}] Evacuate";
+        ApplyDefaultPrompt();
 
         // Set up the evac timer for ExitZone teleporters
         if (type == TeleporterType.ExitZone)
@@ -57,14 +65,20 @@ public class ZoneTeleporter : MonoBehaviour
             if (evacTimer == null)
                 evacTimer = gameObject.AddComponent<EvacTimerUI>();
 
+            evacTimer.Duration = evacDuration;
+            evacTimer.ActionLabel = "EVACUATING // ZONE";
             evacTimer.OnTimerComplete += OnEvacTimerComplete;
+            evacTimer.OnTimerCancelled += OnEvacTimerCancelled;
         }
     }
 
     private void OnDestroy()
     {
         if (evacTimer != null)
+        {
             evacTimer.OnTimerComplete -= OnEvacTimerComplete;
+            evacTimer.OnTimerCancelled -= OnEvacTimerCancelled;
+        }
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -81,9 +95,12 @@ public class ZoneTeleporter : MonoBehaviour
 
             // Cancel evac if the player walks away
             if (evacTimer != null && evacTimer.IsRunning)
-            {
                 evacTimer.CancelTimer();
-                prompt.PromptText = $"[{interactKey}] Evacuate";
+
+            if (prompt != null)
+            {
+                prompt.SetSuppressed(false);
+                ApplyDefaultPrompt();
             }
         }
     }
@@ -98,10 +115,9 @@ public class ZoneTeleporter : MonoBehaviour
 
         if (type == TeleporterType.ExitZone && evacTimer != null)
         {
-            // Start the countdown instead of teleporting immediately
+            // Start the countdown and suppress the interaction prompt
+            prompt.SetSuppressed(true);
             evacTimer.StartTimer();
-            // Update prompt to show waiting state
-            prompt.PromptText = "Evacuating...";
         }
         else
         {
@@ -111,13 +127,26 @@ public class ZoneTeleporter : MonoBehaviour
 
     // ── Timer callback ─────────────────────────────────────────────────
 
+    private void OnEvacTimerCancelled()
+    {
+        if (prompt != null)
+        {
+            prompt.SetSuppressed(false);
+            ApplyDefaultPrompt();
+        }
+    }
+
     private void OnEvacTimerComplete()
     {
+        if (prompt != null)
+        {
+            prompt.SetSuppressed(false);
+            ApplyDefaultPrompt();
+        }
+
         // Only teleport if the player is still in range
         if (playerInRange)
             StartCoroutine(TeleportSequence());
-
-        prompt.PromptText = $"[{interactKey}] Evacuate";
     }
 
     // ── Teleportation ──────────────────────────────────────────────────

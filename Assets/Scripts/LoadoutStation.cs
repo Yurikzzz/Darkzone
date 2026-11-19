@@ -32,6 +32,7 @@ public class LoadoutStation : MonoBehaviour
             promptUI = gameObject.AddComponent<InteractionPromptUI>();
         }
         promptUI.PromptText = promptText;
+        promptUI.SetPrompt(interactKey, "OPEN MENU // LOADOUT", "LOADOUT");
     }
 
     private void OnTriggerEnter2D(Collider2D other)
@@ -58,6 +59,9 @@ public class LoadoutStation : MonoBehaviour
 
     private void Update()
     {
+        if (promptUI != null)
+            promptUI.SetSuppressed(LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen);
+
         if (!playerInRange) return;
 
         if (Input.GetKeyDown(interactKey))

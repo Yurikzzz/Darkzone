@@ -143,6 +143,7 @@ public class LootChest : MonoBehaviour
             promptUI = gameObject.AddComponent<InteractionPromptUI>();
         }
         promptUI.PromptText = promptText;
+        promptUI.SetPrompt(interactKey, "OPEN // CONTAINER", "CHEST");
 
         // Setup 3-second opening timer
         openTimer = GetComponent<EvacTimerUI>();
@@ -152,8 +153,9 @@ public class LootChest : MonoBehaviour
         }
         openTimer.Duration = openDuration;
         openTimer.Offset = timerOffset;
-        openTimer.RingFillColor = new Color(1f, 0.75f, 0.2f, 0.95f);
+        openTimer.ActionLabel = "OPENING // CHEST";
         openTimer.OnTimerComplete += HandleOpenTimerComplete;
+        openTimer.OnTimerCancelled += HandleOpenTimerCancelled;
 
         // Auto-populate available loot pool if empty (excluding Pistol)
         if (availableLoot == null || availableLoot.Count == 0)
@@ -187,6 +189,7 @@ public class LootChest : MonoBehaviour
         if (openTimer != null)
         {
             openTimer.OnTimerComplete -= HandleOpenTimerComplete;
+            openTimer.OnTimerCancelled -= HandleOpenTimerCancelled;
         }
 
         if (DarkzoneManager.Instance != null)
@@ -241,6 +244,7 @@ public class LootChest : MonoBehaviour
             if (!isOpened && !isOpening)
             {
                 promptUI.PromptText = promptText;
+                promptUI.SetPrompt(interactKey, "OPEN // CONTAINER", "CHEST");
             }
         }
     }
@@ -310,9 +314,15 @@ public class LootChest : MonoBehaviour
             if (promptUI != null)
             {
                 promptUI.PromptText = promptText;
+                promptUI.SetPrompt(interactKey, "OPEN // CONTAINER", "CHEST");
                 promptUI.SetSuppressed(false);
             }
         }
+    }
+
+    private void HandleOpenTimerCancelled()
+    {
+        CancelOpening();
     }
 
     private void HandleOpenTimerComplete()
@@ -674,6 +684,7 @@ public class LootChest : MonoBehaviour
         if (promptUI != null)
         {
             promptUI.PromptText = promptText;
+            promptUI.SetPrompt(interactKey, "OPEN // CONTAINER", "CHEST");
             promptUI.SetSuppressed(false);
         }
     }

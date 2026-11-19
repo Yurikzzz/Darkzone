@@ -1,10 +1,9 @@
 using UnityEngine;
-using TMPro;
 
 /// <summary>
-/// Displays a circular countdown timer above a GameObject (e.g. the evac point).
-/// Fully self-contained — creates its own visuals at runtime (no prefab needed).
-/// Call StartTimer() to begin the countdown and subscribe to OnTimerComplete.
+/// Timer driver for timed world interactions (e.g. chest opening and evacuation).
+/// Drives the screen-space HUDTimedActionUI panel in HUD Canvas/HUDRoot
+/// and supports cancellation via [ESC] or leaving range.
 /// </summary>
 public class EvacTimerUI : MonoBehaviour
 {
@@ -12,27 +11,27 @@ public class EvacTimerUI : MonoBehaviour
     [Tooltip("Total countdown duration in seconds.")]
     [SerializeField] private float duration = 15f;
 
-    [Header("Visuals")]
-    [Tooltip("Vertical offset above the object (world units).")]
-    [SerializeField] private Vector2 offset = new Vector2(0f, 2.5f);
+    [Tooltip("Header label displayed on the Timed Action HUD panel.")]
+    [SerializeField] private string actionLabel = "ACTION // IN PROGRESS";
 
-    [SerializeField] private float ringRadius = 0.5f;
-    [SerializeField] private float ringThickness = 0.08f;
-    [SerializeField] private int ringSegments = 64;
-    [SerializeField] private Color ringBackgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
-    [SerializeField] private Color ringFillColor = new Color(0f, 0.9f, 1f, 0.9f);
-    [SerializeField] private Color timerTextColor = Color.white;
-    [SerializeField] private float textFontSize = 4f;
-    [SerializeField] private int sortingOrder = 110;
+    [Tooltip("When true, pressing Escape during the timed action cancels it.")]
+    [SerializeField] private bool allowEscapeCancel = true;
+
+    [SerializeField, HideInInspector] private Vector2 offset = new Vector2(0f, 2.5f);
+    [SerializeField, HideInInspector] private float ringRadius = 0.5f;
+    [SerializeField, HideInInspector] private float ringThickness = 0.08f;
+    [SerializeField, HideInInspector] private int ringSegments = 64;
+    [SerializeField, HideInInspector] private Color ringBackgroundColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
+    [SerializeField, HideInInspector] private Color ringFillColor = new Color(0f, 0.9f, 1f, 0.9f);
+    [SerializeField, HideInInspector] private Color timerTextColor = Color.white;
+    [SerializeField, HideInInspector] private float textFontSize = 4f;
+    [SerializeField, HideInInspector] private int sortingOrder = 110;
 
     // ── Events ────────────────────────────────────────────────────────
     public event System.Action OnTimerComplete;
+    public event System.Action OnTimerCancelled;
 
     // ── Runtime ───────────────────────────────────────────────────────
-    private GameObject timerRoot;
-    private TextMeshPro timerText;
-    private LineRenderer ringBg;
-    private LineRenderer ringFill;
     private bool isRunning;
     private float timeRemaining;
 
@@ -49,40 +48,52 @@ public class EvacTimerUI : MonoBehaviour
         set => duration = value;
     }
 
-    /// <summary>Vertical offset above object.</summary>
+    /// <summary>Header label displayed on the Timed Action HUD panel.</summary>
+    public string ActionLabel
+    {
+        get => actionLabel;
+        set => actionLabel = value;
+    }
+
+    /// <summary>Whether pressing Escape cancels this timed action.</summary>
+    public bool AllowEscapeCancel
+    {
+        get => allowEscapeCancel;
+        set => allowEscapeCancel = value;
+    }
+
+    /// <summary>Legacy vertical offset property retained for compatibility.</summary>
     public Vector2 Offset
     {
         get => offset;
         set => offset = value;
     }
 
-    /// <summary>Color of the timer ring fill.</summary>
+    /// <summary>Legacy fill color property retained for compatibility.</summary>
     public Color RingFillColor
     {
         get => ringFillColor;
-        set
-        {
-            ringFillColor = value;
-            if (ringFill != null)
-            {
-                ringFill.startColor = ringFillColor;
-                ringFill.endColor = ringFillColor;
-            }
-        }
+        set => ringFillColor = value;
     }
 
     // ────────────────────────────────────────────────────────────────────
 
-    private void Awake()
+    private void OnDisable()
     {
-        CreateVisuals();
-        timerRoot.SetActive(false);
+        if (isRunning)
+        {
+            isRunning = false;
+            HUDTimedActionUI.Instance?.Hide(this);
+        }
     }
 
     private void OnDestroy()
     {
-        if (timerRoot != null)
-            Destroy(timerRoot);
+        if (isRunning)
+        {
+            isRunning = false;
+            HUDTimedActionUI.Instance?.Hide(this);
+        }
     }
 
     /// <summary>Start (or restart) the countdown.</summary>
@@ -90,128 +101,45 @@ public class EvacTimerUI : MonoBehaviour
     {
         timeRemaining = duration;
         isRunning = true;
-        timerRoot.SetActive(true);
-        UpdateVisuals();
+        string hint = allowEscapeCancel ? "[ESC] CANCEL" : "";
+        HUDTimedActionUI.Instance?.Show(this, actionLabel, timeRemaining, duration, hint);
     }
 
-    /// <summary>Cancel the timer and hide it.</summary>
+    /// <summary>Cancel the timer and hide the HUD panel.</summary>
     public void CancelTimer()
     {
+        if (!isRunning)
+            return;
+
         isRunning = false;
-        timerRoot.SetActive(false);
+        HUDTimedActionUI.Instance?.Hide(this);
     }
 
     private void Update()
     {
-        if (!isRunning) return;
+        if (!isRunning)
+            return;
+
+        bool menuOpen = LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen;
+        if (allowEscapeCancel && !menuOpen && Input.GetKeyDown(KeyCode.Escape))
+        {
+            CancelTimer();
+            OnTimerCancelled?.Invoke();
+            return;
+        }
 
         timeRemaining -= Time.deltaTime;
-        timerRoot.transform.position = (Vector2)transform.position + offset;
+        string hint = allowEscapeCancel ? "[ESC] CANCEL" : "";
 
         if (timeRemaining <= 0f)
         {
             timeRemaining = 0f;
             isRunning = false;
-            UpdateVisuals();
-            timerRoot.SetActive(false);
+            HUDTimedActionUI.Instance?.Hide(this);
             OnTimerComplete?.Invoke();
             return;
         }
 
-        UpdateVisuals();
-    }
-
-    // ── Visual Construction ────────────────────────────────────────────
-
-    private void CreateVisuals()
-    {
-        timerRoot = new GameObject($"{gameObject.name}_EvacTimer");
-
-        // ── Background ring (full circle, dim) ──
-        GameObject bgObj = new GameObject("RingBackground");
-        bgObj.transform.SetParent(timerRoot.transform);
-        bgObj.transform.localPosition = Vector3.zero;
-        ringBg = bgObj.AddComponent<LineRenderer>();
-        ConfigureRing(ringBg, ringBackgroundColor, 1f);
-
-        // ── Fill ring (arc that shrinks as time runs out) ──
-        GameObject fillObj = new GameObject("RingFill");
-        fillObj.transform.SetParent(timerRoot.transform);
-        fillObj.transform.localPosition = Vector3.zero;
-        ringFill = fillObj.AddComponent<LineRenderer>();
-        ConfigureRing(ringFill, ringFillColor, 1f);
-
-        // ── Timer text ──
-        GameObject textObj = new GameObject("TimerText");
-        textObj.transform.SetParent(timerRoot.transform);
-        textObj.transform.localPosition = new Vector3(0f, 0f, -0.01f);
-
-        timerText = textObj.AddComponent<TextMeshPro>();
-        timerText.fontSize = textFontSize;
-        timerText.color = timerTextColor;
-        timerText.alignment = TextAlignmentOptions.Center;
-        timerText.sortingOrder = sortingOrder + 2;
-        timerText.enableWordWrapping = false;
-        timerText.overflowMode = TextOverflowModes.Overflow;
-        timerText.rectTransform.sizeDelta = new Vector2(2f, 1f);
-    }
-
-    private void ConfigureRing(LineRenderer lr, Color color, float fraction)
-    {
-        lr.useWorldSpace = false;
-        lr.startWidth = ringThickness;
-        lr.endWidth = ringThickness;
-        lr.startColor = color;
-        lr.endColor = color;
-        lr.sortingOrder = sortingOrder;
-        lr.material = new Material(Shader.Find("Sprites/Default"));
-        lr.material.color = color;
-        lr.loop = false;
-
-        SetRingPoints(lr, fraction);
-    }
-
-    private void SetRingPoints(LineRenderer lr, float fraction)
-    {
-        int count = Mathf.Max(2, Mathf.CeilToInt(ringSegments * fraction) + 1);
-        lr.positionCount = count;
-
-        for (int i = 0; i < count; i++)
-        {
-            // Start from the top (90°) and go clockwise
-            float t = (float)i / (count - 1);
-            float angle = (Mathf.PI / 2f) - t * fraction * Mathf.PI * 2f;
-            float x = Mathf.Cos(angle) * ringRadius;
-            float y = Mathf.Sin(angle) * ringRadius;
-            lr.SetPosition(i, new Vector3(x, y, 0f));
-        }
-    }
-
-    private void UpdateVisuals()
-    {
-        float fraction = Mathf.Clamp01(timeRemaining / duration);
-
-        // Update the fill arc
-        SetRingPoints(ringFill, fraction);
-
-        // Update the text
-        int seconds = Mathf.CeilToInt(timeRemaining);
-        timerText.text = seconds.ToString();
-
-        // Pulse the fill color when low
-        if (timeRemaining <= 5f)
-        {
-            float pulse = (Mathf.Sin(Time.time * 6f) + 1f) / 2f;
-            Color c = Color.Lerp(ringFillColor, Color.red, pulse);
-            ringFill.startColor = c;
-            ringFill.endColor = c;
-            ringFill.material.color = c;
-        }
-        else
-        {
-            ringFill.startColor = ringFillColor;
-            ringFill.endColor = ringFillColor;
-            ringFill.material.color = ringFillColor;
-        }
+        HUDTimedActionUI.Instance?.UpdateProgress(this, actionLabel, timeRemaining, duration, hint);
     }
 }

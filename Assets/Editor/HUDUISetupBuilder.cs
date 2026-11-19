@@ -386,6 +386,12 @@ public static class HUDUISetupBuilder
         // 5. Bottom-Right: WeaponAmmoModule
         BuildWeaponAmmoModule(hudRoot, assets);
 
+        // 6. Center-Right: InteractionPrompt (tnv5X)
+        BuildInteractionPrompt(hudRoot, canvasObj, assets);
+
+        // 7. Center-Bottom: TimedAction (AC30s)
+        BuildTimedAction(hudRoot, canvasObj, assets);
+
         // Wire ConsumableHUD on HUD Canvas
         ConsumableHUD consumableHud = canvasObj.GetComponent<ConsumableHUD>() ?? canvasObj.AddComponent<ConsumableHUD>();
         SerializedObject chSo = new SerializedObject(consumableHud);
@@ -762,6 +768,181 @@ public static class HUDUISetupBuilder
         so.FindProperty("ammoCurrentText").objectReferenceValue = ammoCur;
         so.FindProperty("ammoMaxText").objectReferenceValue = ammoMax;
         so.FindProperty("ammoLabelText").objectReferenceValue = ammoLbl;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void BuildInteractionPrompt(RectTransform hudRoot, GameObject canvasObj, HUDAssets assets)
+    {
+        RectTransform promptBorder = NewRect("InteractionPrompt", hudRoot);
+        promptBorder.anchorMin = new Vector2(0.5f, 0.5f);
+        promptBorder.anchorMax = new Vector2(0.5f, 0.5f);
+        promptBorder.pivot = new Vector2(0.5f, 0f);
+        promptBorder.anchoredPosition = Vector2.zero;
+        AddRoundedImage(promptBorder.gameObject, assets.rounded4Px, BorderSubtle);
+
+        CanvasGroup cg = promptBorder.gameObject.AddComponent<CanvasGroup>();
+        cg.alpha = 0f;
+        cg.interactable = false;
+        cg.blocksRaycasts = false;
+
+        HorizontalLayoutGroup hlg = promptBorder.gameObject.AddComponent<HorizontalLayoutGroup>();
+        hlg.padding = new RectOffset(10, 14, 8, 8);
+        hlg.spacing = 10f;
+        hlg.childAlignment = TextAnchor.MiddleLeft;
+        hlg.childControlWidth = true;
+        hlg.childControlHeight = true;
+        hlg.childForceExpandWidth = false;
+        hlg.childForceExpandHeight = false;
+
+        ContentSizeFitter fitter = promptBorder.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        RectTransform fill = NewRect("Fill", promptBorder);
+        Stretch(fill, 1f, 1f, 1f, 1f);
+        AddRoundedImage(fill.gameObject, assets.rounded4Px, BgSurface);
+        fill.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+
+        // 1. Accent Bar (2x28)
+        RectTransform accentRt = NewRect("AccentBar", promptBorder);
+        Image accentImg = AddRoundedImage(accentRt.gameObject, assets.rounded1Px, AccentGreen);
+        SetLE(accentRt.gameObject, 2f, 28f, 0f, 0f);
+
+        // 2. Keybind Box (28x28)
+        RectTransform keyBorder = NewRect("KeybindBoxBorder", promptBorder);
+        AddRoundedImage(keyBorder.gameObject, assets.rounded3Px, BorderSubtle);
+        SetLE(keyBorder.gameObject, 28f, 28f, 0f, 0f);
+
+        RectTransform keyFill = NewRect("KeybindBoxFill", keyBorder);
+        Stretch(keyFill, 1f, 1f, 1f, 1f);
+        AddRoundedImage(keyFill.gameObject, assets.rounded3Px, BgInset);
+
+        TextMeshProUGUI keyText = NewText("Key", keyFill, "E", 12f, TextPrimary, TextAlignmentOptions.Center, assets.monoSemiBold);
+        keyText.overflowMode = TextOverflowModes.Overflow;
+        Stretch(keyText.rectTransform);
+
+        // 3. Prompt Text Column
+        RectTransform textCol = NewRect("PromptText", promptBorder);
+        AddLayout(textCol.gameObject, true, 2f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleLeft);
+        SetLE(textCol.gameObject, -1f, -1f, 0f, 0f);
+
+        TextMeshProUGUI actionLabel = NewText("ActionLabel", textCol, "OPEN MENU // LOADOUT", 9f, AccentGreen, TextAlignmentOptions.MidlineLeft, assets.monoRegular);
+        actionLabel.characterSpacing = 5f;
+        actionLabel.overflowMode = TextOverflowModes.Overflow;
+        SetLE(actionLabel.gameObject, -1f, 13f, 0f, 0f);
+
+        TextMeshProUGUI targetName = NewText("TargetName", textCol, "LOADOUT", 12f, TextPrimary, TextAlignmentOptions.MidlineLeft, assets.monoSemiBold);
+        targetName.characterSpacing = 2.5f;
+        targetName.overflowMode = TextOverflowModes.Overflow;
+        SetLE(targetName.gameObject, -1f, 16f, 0f, 0f);
+
+        promptBorder.gameObject.SetActive(false);
+
+        // Wire HUDInteractionPromptUI on always-active HUD Canvas
+        HUDInteractionPromptUI promptCtrl = canvasObj.GetComponent<HUDInteractionPromptUI>() ?? canvasObj.AddComponent<HUDInteractionPromptUI>();
+        SerializedObject so = new SerializedObject(promptCtrl);
+        so.FindProperty("panelRoot").objectReferenceValue = promptBorder.gameObject;
+        so.FindProperty("canvasGroup").objectReferenceValue = cg;
+        so.FindProperty("accentBarImage").objectReferenceValue = accentImg;
+        so.FindProperty("keyText").objectReferenceValue = keyText;
+        so.FindProperty("actionLabelText").objectReferenceValue = actionLabel;
+        so.FindProperty("targetNameText").objectReferenceValue = targetName;
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    private static void BuildTimedAction(RectTransform hudRoot, GameObject canvasObj, HUDAssets assets)
+    {
+        RectTransform timerBorder = NewRect("TimedAction", hudRoot);
+        timerBorder.anchorMin = new Vector2(0.5f, 0.5f);
+        timerBorder.anchorMax = new Vector2(0.5f, 0.5f);
+        timerBorder.pivot = new Vector2(0.5f, 1f);
+        timerBorder.anchoredPosition = new Vector2(0f, -80f);
+        timerBorder.sizeDelta = new Vector2(240f, 68f);
+        AddRoundedImage(timerBorder.gameObject, assets.rounded4Px, BorderSubtle);
+
+        VerticalLayoutGroup vlg = timerBorder.gameObject.AddComponent<VerticalLayoutGroup>();
+        vlg.padding = new RectOffset(14, 14, 10, 12);
+        vlg.spacing = 8f;
+        vlg.childAlignment = TextAnchor.UpperLeft;
+        vlg.childControlWidth = true;
+        vlg.childControlHeight = true;
+        vlg.childForceExpandWidth = true;
+        vlg.childForceExpandHeight = false;
+
+        ContentSizeFitter fitter = timerBorder.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        RectTransform fill = NewRect("Fill", timerBorder);
+        Stretch(fill, 1f, 1f, 1f, 1f);
+        AddRoundedImage(fill.gameObject, assets.rounded4Px, BgSurface);
+        fill.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+
+        // 1. Action Header
+        RectTransform header = NewRect("ActionHeader", timerBorder);
+        SetLE(header.gameObject, 0f, 16f, 1f, 0f);
+        AddLayout(header.gameObject, false, 7f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleLeft);
+
+        RectTransform dotRt = NewRect("ActiveDot", header);
+        Image dotImg = dotRt.gameObject.AddComponent<Image>();
+        dotImg.sprite = assets.circleDot;
+        dotImg.color = AccentGreen;
+        dotImg.raycastTarget = false;
+        SetLE(dotRt.gameObject, 6f, 6f, 0f, 0f);
+
+        TextMeshProUGUI actionName = NewText("ActionName", header, "OPENING // CHEST", 10f, TextPrimary, TextAlignmentOptions.MidlineLeft, assets.monoSemiBold);
+        actionName.characterSpacing = 4f;
+        actionName.overflowMode = TextOverflowModes.Ellipsis;
+        SetLE(actionName.gameObject, 0f, 16f, 1f, 0f);
+
+        TextMeshProUGUI countdown = NewText("Countdown", header, "01.8s", 12f, AccentGreen, TextAlignmentOptions.MidlineRight, assets.monoSemiBold);
+        countdown.overflowMode = TextOverflowModes.Overflow;
+        SetLE(countdown.gameObject, -1f, 16f, 0f, 0f);
+
+        // 2. Progress Track (4px high)
+        RectTransform trackBorder = NewRect("ProgressTrack", timerBorder);
+        AddRoundedImage(trackBorder.gameObject, assets.rounded1Px, BorderSubtle);
+        SetLE(trackBorder.gameObject, 0f, 4f, 1f, 0f);
+
+        RectTransform trackInset = NewRect("TrackInset", trackBorder);
+        Stretch(trackInset, 1f, 1f, 1f, 1f);
+        AddRoundedImage(trackInset.gameObject, assets.rounded1Px, BgInset);
+
+        RectTransform progressFill = NewRect("ProgressFill", trackInset);
+        progressFill.anchorMin = new Vector2(0f, 0f);
+        progressFill.anchorMax = new Vector2(0.62f, 1f);
+        progressFill.pivot = new Vector2(0f, 0.5f);
+        progressFill.offsetMin = Vector2.zero;
+        progressFill.offsetMax = Vector2.zero;
+        AddRoundedImage(progressFill.gameObject, assets.rounded1Px, AccentGreen);
+
+        // 3. Action Footer
+        RectTransform footer = NewRect("ActionFooter", timerBorder);
+        SetLE(footer.gameObject, 0f, 13f, 1f, 0f);
+        AddLayout(footer.gameObject, false, 4f, new RectOffset(0, 0, 0, 0), TextAnchor.MiddleLeft);
+
+        TextMeshProUGUI cancelHint = NewText("CancelHint", footer, "[ESC] CANCEL", 9f, TextMuted, TextAlignmentOptions.MidlineLeft, assets.monoRegular);
+        cancelHint.characterSpacing = 4f;
+        cancelHint.overflowMode = TextOverflowModes.Overflow;
+        SetLE(cancelHint.gameObject, 0f, 13f, 1f, 0f);
+
+        TextMeshProUGUI progressPct = NewText("ProgressPercent", footer, "62%", 9f, TextSecondary, TextAlignmentOptions.MidlineRight, assets.monoRegular);
+        progressPct.characterSpacing = 4f;
+        progressPct.overflowMode = TextOverflowModes.Overflow;
+        SetLE(progressPct.gameObject, -1f, 13f, 0f, 0f);
+
+        timerBorder.gameObject.SetActive(false);
+
+        // Wire HUDTimedActionUI on always-active HUD Canvas
+        HUDTimedActionUI timerCtrl = canvasObj.GetComponent<HUDTimedActionUI>() ?? canvasObj.AddComponent<HUDTimedActionUI>();
+        SerializedObject so = new SerializedObject(timerCtrl);
+        so.FindProperty("panelRoot").objectReferenceValue = timerBorder.gameObject;
+        so.FindProperty("activeDotImage").objectReferenceValue = dotImg;
+        so.FindProperty("actionNameText").objectReferenceValue = actionName;
+        so.FindProperty("countdownText").objectReferenceValue = countdown;
+        so.FindProperty("progressFillRect").objectReferenceValue = progressFill;
+        so.FindProperty("cancelHintText").objectReferenceValue = cancelHint;
+        so.FindProperty("progressPercentText").objectReferenceValue = progressPct;
         so.ApplyModifiedPropertiesWithoutUndo();
     }
 
