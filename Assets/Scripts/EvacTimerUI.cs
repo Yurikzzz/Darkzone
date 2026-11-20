@@ -120,7 +120,8 @@ public class EvacTimerUI : MonoBehaviour
         if (!isRunning)
             return;
 
-        bool menuOpen = LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen;
+        bool menuOpen = (LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen) ||
+                        (ShopUI.Instance != null && ShopUI.Instance.IsOpen);
         if (allowEscapeCancel && !menuOpen && Input.GetKeyDown(KeyCode.Escape))
         {
             CancelTimer();

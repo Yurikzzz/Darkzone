@@ -1,0 +1,114 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0292c51be0183cb439880beba89ff49b, type: 3}
+  m_Name: DefaultShopCatalog
+  m_EditorClassIdentifier: 
+  runsPerRestock: 2
+  priceRoundingStep: 10
+  categoryConfigs:
+  - category: 0
+    minListings: 3
+    maxListings: 4
+    allowDuplicates: 0
+  - category: 1
+    minListings: 0
+    maxListings: 0
+    allowDuplicates: 0
+  - category: 2
+    minListings: 2
+    maxListings: 2
+    allowDuplicates: 0
+  itemPool:
+  - itemAsset: {fileID: 11400000, guid: b5a8c204fde2c7e458a1c0aece663f0b, type: 2}
+    category: 0
+    basePrice: 250
+    priceVariance: 0.05
+    spawnWeight: 1
+    alwaysIncluded: 0
+    minStock: 1
+    maxStock: 2
+    unlimitedStock: 0
+    categoryTagOverride: SIDEARM // 9MM
+    metaOverride: 
+    iconOverride: {fileID: 0}
+  - itemAsset: {fileID: 11400000, guid: ecb46f00669e4224285b7ac6d5aa98b8, type: 2}
+    category: 0
+    basePrice: 600
+    priceVariance: 0.05
+    spawnWeight: 1.2
+    alwaysIncluded: 0
+    minStock: 1
+    maxStock: 2
+    unlimitedStock: 0
+    categoryTagOverride: SMG // 9MM
+    metaOverride: 
+    iconOverride: {fileID: 0}
+  - itemAsset: {fileID: 11400000, guid: 8bb8d0cd6b4c3cb4eb03b5035f5f478c, type: 2}
+    category: 0
+    basePrice: 750
+    priceVariance: 0.05
+    spawnWeight: 1.1
+    alwaysIncluded: 0
+    minStock: 1
+    maxStock: 2
+    unlimitedStock: 0
+    categoryTagOverride: SHOTGUN // 12GA
+    metaOverride: 
+    iconOverride: {fileID: 0}
+  - itemAsset: {fileID: 11400000, guid: bc43c9a74b6be004892b897bdfa3d454, type: 2}
+    category: 0
+    basePrice: 1100
+    priceVariance: 0.05
+    spawnWeight: 1
+    alwaysIncluded: 0
+    minStock: 1
+    maxStock: 2
+    unlimitedStock: 0
+    categoryTagOverride: RIFLE // 5.56MM
+    metaOverride: 
+    iconOverride: {fileID: 0}
+  - itemAsset: {fileID: 11400000, guid: e7b17ef7008e705498c3bd969f344c70, type: 2}
+    category: 0
+    basePrice: 1400
+    priceVariance: 0.05
+    spawnWeight: 0.7
+    alwaysIncluded: 0
+    minStock: 1
+    maxStock: 1
+    unlimitedStock: 0
+    categoryTagOverride: SNIPER // .308 WIN
+    metaOverride: 
+    iconOverride: {fileID: 0}
+  - itemAsset: {fileID: 11400000, guid: 9dbec8b62f1e73f4795d123cfb316983, type: 2}
+    category: 2
+    basePrice: 180
+    priceVariance: 0.05
+    spawnWeight: 1.5
+    alwaysIncluded: 0
+    minStock: 2
+    maxStock: 5
+    unlimitedStock: 0
+    categoryTagOverride: MEDICAL // +50 HP
+    metaOverride: 
+    iconOverride: {fileID: 0}
+  - itemAsset: {fileID: 11400000, guid: 8b4dfe0417916b545a811855954f2d70, type: 2}
+    category: 2
+    basePrice: 140
+    priceVariance: 0.05
+    spawnWeight: 1.2
+    alwaysIncluded: 0
+    minStock: 2
+    maxStock: 5
+    unlimitedStock: 0
+    categoryTagOverride: ORDNANCE // HE
+    metaOverride: 
+    iconOverride: {fileID: 0}

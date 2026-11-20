@@ -37,8 +37,11 @@ public class PlayerConsumables : MonoBehaviour
 
     private void Update()
     {
-        // Don't allow using consumables if inventory is null or player is dead
+        // Don't allow using consumables if inventory is null, a menu is open, or player is dead
         if (playerHealth != null && !playerHealth.IsAlive) return;
+        if ((LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen) ||
+            (ShopUI.Instance != null && ShopUI.Instance.IsOpen))
+            return;
 
         // Check slots 1-4 (indices 0-3)
         if (Input.GetKeyDown(slot1Key) || Input.GetKeyDown(KeyCode.Keypad3))

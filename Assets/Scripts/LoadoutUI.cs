@@ -149,6 +149,9 @@ public class LoadoutUI : MonoBehaviour, IDropHandler
     /// <summary>Opens the loadout station UI and disables player movement.</summary>
     public void Open()
     {
+        if (ShopUI.Instance != null && ShopUI.Instance.IsOpen)
+            ShopUI.Instance.Close();
+
         openedFrame = Time.frameCount;
 
         transform.SetAsLastSibling();

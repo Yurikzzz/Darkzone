@@ -17,6 +17,11 @@ public class DarkzoneManager : MonoBehaviour
     /// <summary>True while the player is inside the Darkzone.</summary>
     public bool IsPlayerInZone { get; private set; }
 
+    /// <summary>Number of completed Darkzone runs (evacuations or deaths) in this session.</summary>
+    public int CompletedRuns => completedRuns;
+
+    private int completedRuns;
+
     // ── Events ──────────────────────────────────────────────────────────
     // Subscribe to these from spawners, loot managers, UI, audio, etc.
 
@@ -25,6 +30,9 @@ public class DarkzoneManager : MonoBehaviour
 
     /// <summary>Fired when the player leaves the Darkzone (evac or death).</summary>
     public event Action OnPlayerLeftZone;
+
+    /// <summary>Fired when a Darkzone run ends (passes total completed runs).</summary>
+    public event Action<int> OnRunCompleted;
 
     // ────────────────────────────────────────────────────────────────────
 
@@ -84,6 +92,7 @@ public class DarkzoneManager : MonoBehaviour
     /// </summary>
     public void ResetZone()
     {
+        bool wasInZone = IsPlayerInZone;
         IsPlayerInZone = false;
 
         // 1. Reset all EnemySpawners in the scene
@@ -150,6 +159,11 @@ public class DarkzoneManager : MonoBehaviour
         }
 
         OnPlayerLeftZone?.Invoke();
+        if (wasInZone)
+        {
+            completedRuns++;
+            OnRunCompleted?.Invoke(completedRuns);
+        }
         Debug.Log("[DarkzoneManager] Zone reset complete! All enemies despawned, spawners reset, and chests closed.");
     }
 

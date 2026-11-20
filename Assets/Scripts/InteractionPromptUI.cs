@@ -186,6 +186,11 @@ public class InteractionPromptUI : MonoBehaviour
             actionLabel = "OPEN MENU // LOADOUT";
             targetLabel = "LOADOUT";
         }
+        else if (lower.Contains("shop"))
+        {
+            actionLabel = "OPEN MENU // SHOP";
+            targetLabel = "SHOP";
+        }
         else if (lower.Contains("chest") || lower.Contains("crate"))
         {
             actionLabel = "OPEN // CONTAINER";

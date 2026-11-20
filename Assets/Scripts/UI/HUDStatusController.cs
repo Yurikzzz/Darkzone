@@ -38,7 +38,8 @@ public class HUDStatusController : MonoBehaviour
     {
         if (hudRoot != null)
         {
-            bool menuOpen = LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen;
+            bool menuOpen = (LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen) ||
+                            (ShopUI.Instance != null && ShopUI.Instance.IsOpen);
             if (hudRoot.activeSelf == menuOpen)
                 hudRoot.SetActive(!menuOpen);
         }

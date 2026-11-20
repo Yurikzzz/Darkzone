@@ -59,10 +59,13 @@ public class LoadoutStation : MonoBehaviour
 
     private void Update()
     {
-        if (promptUI != null)
-            promptUI.SetSuppressed(LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen);
+        bool loadoutOpen = LoadoutUI.Instance != null && LoadoutUI.Instance.IsOpen;
+        bool shopOpen = ShopUI.Instance != null && ShopUI.Instance.IsOpen;
 
-        if (!playerInRange) return;
+        if (promptUI != null)
+            promptUI.SetSuppressed(loadoutOpen || shopOpen);
+
+        if (!playerInRange || shopOpen) return;
 
         if (Input.GetKeyDown(interactKey))
         {

@@ -1016,6 +1016,163 @@ public class PlayerInventory : MonoBehaviour
             OnInventoryChanged?.Invoke();
     }
 
+    // ── Shop Purchase API ───────────────────────────────────────────────
+
+    /// <summary>
+    /// Grants a purchased item of any supported type into an empty equipped slot if available,
+    /// otherwise stores it safely in the player's Stash.
+    /// </summary>
+    public void AddPurchasedItem(ScriptableObject item, int quantity = 1)
+    {
+        if (item == null || quantity <= 0) return;
+
+        if (item is WeaponData weapon)
+        {
+            AddPurchasedWeapon(weapon, quantity);
+        }
+        else if (item is ConsumableData consumable)
+        {
+            AddPurchasedConsumable(consumable, quantity);
+        }
+        else
+        {
+            AddPurchasedEquipment(item, quantity);
+        }
+    }
+
+    /// <summary>
+    /// Grants purchased weapon(s). Equips into empty Primary or Secondary slots if available;
+    /// any additional weapons remain in the owned stash.
+    /// </summary>
+    public void AddPurchasedWeapon(WeaponData weapon, int quantity = 1)
+    {
+        if (weapon == null || quantity <= 0) return;
+
+        bool equippedChanged = false;
+        for (int i = 0; i < quantity; i++)
+        {
+            WeaponData instance = EnsureRuntimeWeaponInstance(weapon, forceNewCopy: true);
+            ownedWeapons.Add(instance);
+
+            if (primaryWeapon == null)
+            {
+                primaryWeapon = instance;
+                equippedChanged = true;
+            }
+            else if (secondaryWeapon == null)
+            {
+                secondaryWeapon = instance;
+                equippedChanged = true;
+            }
+        }
+
+        if (equippedChanged)
+            SyncWithWeaponController();
+
+        OnInventoryChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Grants purchased consumable(s). Equips into a matching quick-slot (up to maxQuickSlotStack)
+    /// or first empty quick-slot if available; any overflow goes to Stash.
+    /// </summary>
+    public void AddPurchasedConsumable(ConsumableData consumable, int quantity = 1)
+    {
+        if (consumable == null || quantity <= 0) return;
+
+        if (activeInventory == null)
+        {
+            AddConsumableToStash(consumable, quantity);
+            return;
+        }
+
+        activeInventory.EnsureQuickSlotCapacity();
+
+        if (consumable.isStackable)
+        {
+            int remaining = quantity;
+            int existingSlot = activeInventory.FindEquippedSlotIndex(consumable);
+            if (existingSlot >= 0)
+            {
+                ConsumableStack slot = activeInventory.GetQuickSlot(existingSlot);
+                if (slot != null)
+                {
+                    int room = Mathf.Max(0, slot.MaxQuickSlotStack - slot.quantity);
+                    int toAdd = Mathf.Min(remaining, room);
+                    if (toAdd > 0)
+                    {
+                        slot.quantity += toAdd;
+                        remaining -= toAdd;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < consumableSlotCount && i < activeInventory.QuickSlots.Count; i++)
+                {
+                    ConsumableStack slot = activeInventory.GetQuickSlot(i);
+                    if (slot != null && slot.IsEmpty)
+                    {
+                        int maxPerSlot = Mathf.Max(1, consumable.maxQuickSlotStack);
+                        int toEquip = Mathf.Min(remaining, maxPerSlot);
+                        activeInventory.SetQuickSlotInternal(i, consumable, toEquip);
+                        remaining -= toEquip;
+                        break;
+                    }
+                }
+            }
+
+            if (remaining > 0)
+                AddConsumableToStashInternal(consumable, remaining);
+        }
+        else
+        {
+            for (int u = 0; u < quantity; u++)
+            {
+                ConsumableData instance = EnsureRuntimeConsumableInstance(consumable, forceNewCopy: true);
+                bool placedInQuickSlot = false;
+                for (int i = 0; i < consumableSlotCount && i < activeInventory.QuickSlots.Count; i++)
+                {
+                    ConsumableStack slot = activeInventory.GetQuickSlot(i);
+                    if (slot != null && slot.IsEmpty)
+                    {
+                        activeInventory.SetQuickSlotInternal(i, instance, 1);
+                        placedInQuickSlot = true;
+                        break;
+                    }
+                }
+
+                if (!placedInQuickSlot)
+                    AddConsumableToStashInternal(instance, 1);
+            }
+        }
+
+        activeInventory.NotifyChanged();
+    }
+
+    /// <summary>
+    /// Grants purchased equipment piece(s). Equips into empty Vest/Mask slots if available;
+    /// otherwise stores in ownedEquipment stash.
+    /// </summary>
+    public void AddPurchasedEquipment(ScriptableObject equipment, int quantity = 1)
+    {
+        if (equipment == null || quantity <= 0 || equipment is WeaponData || equipment is ConsumableData)
+            return;
+
+        for (int i = 0; i < quantity; i++)
+        {
+            ScriptableObject instance = EnsureRuntimeScriptableInstance(equipment, forceNewCopy: true);
+            ownedEquipment.Add(instance);
+
+            if (equippedVest == null)
+                equippedVest = instance;
+            else if (equippedMask == null)
+                equippedMask = instance;
+        }
+
+        OnInventoryChanged?.Invoke();
+    }
+
     // ── Item Removal API ────────────────────────────────────────────────
 
     /// <summary>
